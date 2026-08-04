@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "sourceRevision": "51f796cfb943625e73928c3a18a534ac000114fb",
   "file": "RecordCove-macOS-preview.zip",
+  "downloadUrl": "https://github.com/PrestonCoreSystems/recordcove-preview/releases/download/v0.1.0-preview.2/RecordCove-macOS-preview.zip",
+  "releaseTag": "v0.1.0-preview.2",
   "bytes": 464105591,
   "sha256": "0a26656d5275ad97e228bf54be69d2f4517fec7effd2de766e4b350a8fce6c13",
   "platform": "macOS 14 or later on Apple silicon",
