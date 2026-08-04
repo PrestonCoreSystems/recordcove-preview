@@ -1,12 +1,14 @@
 {
   "product": "RecordCove",
   "version": "0.1.0",
-  "sourceRevision": "766ec72bf4ef068134da07e282dfa83cefa2c8a5",
-  "file": "RecordCove-macOS-preview.zip",
-  "bytes": 464144051,
-  "sha256": "a1e2d36899a10809a969e3df97ca6e5cd949591e426037a7f58725813cbbc6ed",
+  "sourceRevision": "b620ef9e9de1b3e4db9e782d06fb9a2aa68ccd48",
+  "file": "RecordCove-b620ef9e9de1b3e4db9e782d06fb9a2aa68ccd48-release-owner-preview.zip",
+  "bytes": 464107868,
+  "sha256": "ed1f1c660958efa1acce7973c6ef30fc933c9e1729f2bebf527aa2ab36f48bdd",
   "platform": "macOS 14 or later on Apple silicon",
   "signing": "ad-hoc",
   "notarized": false,
+  "audience": "owner-only",
+  "friendDownloadEnabled": false,
   "publicReleaseApproved": false
 }

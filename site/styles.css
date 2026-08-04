@@ -9,6 +9,8 @@ h1 { margin: 12px 0; font-family: Georgia, serif; font-size: clamp(42px, 8vw, 68
 .lede { margin: 20px auto 30px; max-width: 590px; color: #5b5d59; font-size: 19px; line-height: 1.55; }
 .button { display: inline-block; border-radius: 10px; background: #bd3455; color: white; padding: 15px 22px; font-weight: 750; text-decoration: none; box-shadow: 0 8px 22px rgb(189 52 85 / 22%); }
 .button:hover { background: #a92d4b; }
+.button-disabled { background: #777a75; box-shadow: none; cursor: not-allowed; }
+.button-disabled:hover { background: #777a75; }
 .button:focus-visible, .links a:focus-visible { outline: 3px solid #20211f; outline-offset: 4px; }
 .facts { margin-top: 18px; color: #777a75; font-size: 14px; }
 .panel { margin-top: 22px; border: 1px solid #dedbd5; border-radius: 16px; background: white; padding: 28px; box-shadow: 0 10px 30px rgb(32 33 31 / 5%); }
