@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Prepare to test the private RecordCove macOS preview.">
+    <meta name="description" content="Download and test the RecordCove macOS preview.">
     <meta name="color-scheme" content="light">
     <title>RecordCove preview</title>
     <link rel="icon" href="/assets/recordcove-mark.svg?v=1" type="image/svg+xml">
@@ -13,20 +13,19 @@
     <main>
       <section class="hero" aria-labelledby="preview-title">
         <img class="mark" src="/assets/recordcove-mark.svg" alt="">
-        <p class="eyebrow">macOS preview</p>
+        <p class="eyebrow">macOS public preview</p>
         <h1 id="preview-title">Your voice, kept.</h1>
         <p class="lede">Record locally, transcribe locally, and turn important conversations into searchable written memory. Recording, transcription, and current local Understanding keep audio and written content on your Mac.</p>
-        <span class="button button-disabled" role="status" aria-disabled="true">Friend download is being prepared</span>
-        <p class="facts">Version 0.1.0 · Apple silicon · macOS 14 or later · Private preview</p>
+        <a class="button" href="https://downloads.preview.recordcove.com/RecordCove-macOS-preview.zip">Download RecordCove for Mac</a>
+        <p class="facts">Version 0.1.0 · Apple silicon · macOS 14 or later · Pre-release</p>
       </section>
       <section class="panel" aria-labelledby="before-title">
-        <h2 id="before-title">Before you open it</h2>
-        <p>The preview page is protected by a one-time email code. You do not need a GitHub or RecordCove account.</p>
-        <p>The friend download will open only after the exact app is Developer ID signed, Apple-notarized, and independently verified. The current owner package is not offered to testers.</p>
+        <h2 id="before-title">Read this before you open it</h2>
+        <p>This is an early public preview for testing. It is ad-hoc signed and is not yet Apple-notarized. macOS will warn you that Apple cannot verify the developer.</p>
         <ol>
-          <li>Read the installation and testing guides now.</li>
-          <li>Wait for the maintainer to confirm that the download is ready.</li>
-          <li>Return with the same invited email address when it opens.</li>
+          <li>Download only from this page.</li>
+          <li>Confirm the filename and checksum shown below.</li>
+          <li>Follow the detailed first-launch steps. Never disable Gatekeeper or run a quarantine-removal command.</li>
         </ol>
         <div class="links">
           <a href="/install.html">Read the detailed installation guide</a>
@@ -38,11 +37,12 @@
         <p>When reporting feedback, never send audio, transcripts, summaries, prompts, model output, personal filenames, or full file paths. A high-level description of the screen and behavior is enough.</p>
       </section>
       <section class="panel" aria-labelledby="download-title">
-        <h2 id="download-title">Verified owner preview file</h2>
-        <p><strong>File:</strong> <code>RecordCove-8b4a857…-release-owner-preview.zip</code></p>
-        <p><strong>Source revision:</strong> <code>8b4a85727abcfe35219ff1e754d0aef6e566dd16</code></p>
-        <p class="checksum"><strong>SHA-256:</strong> <code>54ca847c49600bb4cf8b26378e27d8c3601d44620d6db4fd523bdb3493af2f75</code></p>
-        <p>This is provenance for the maintainer's exact local package. It is ad-hoc signed, not Apple-notarized, and not downloadable by friends. The friend build will receive its own filename, checksum, signing identity, notarization receipt, and verification record.</p>
+        <h2 id="download-title">Exact preview file</h2>
+        <p><strong>File:</strong> <code>RecordCove-macOS-preview.zip</code></p>
+        <p><strong>Size:</strong> <code>464105591 bytes</code></p>
+        <p><strong>Source revision:</strong> <code>51f796cfb943625e73928c3a18a534ac000114fb</code></p>
+        <p class="checksum"><strong>SHA-256:</strong> <code>0a26656d5275ad97e228bf54be69d2f4517fec7effd2de766e4b350a8fce6c13</code></p>
+        <p>This exact archive passed the local package verifier. It is ad-hoc signed, not Apple-notarized, not a production release, and not the Homebrew build.</p>
       </section>
     </main>
     <footer>Copyright <span id="year"></span> Preston Core Systems Limited. RecordCove preview.</footer>
