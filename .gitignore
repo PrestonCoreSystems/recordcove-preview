@@ -11,6 +11,10 @@
 *.sln.docstates
 *.env
 
+# RecordCove preview site build output
+dist/
+node_modules/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
