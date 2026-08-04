@@ -13,8 +13,8 @@ test("preview page carries current identity and safety boundary", async () => {
   assert.match(page, /do not need a GitHub or RecordCove account/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
-  assert.equal(manifest.sourceRevision, "7f77866be0707fce017baa0a64255101794dec8e");
-  assert.equal(manifest.bytes, 464105582);
+  assert.equal(manifest.sourceRevision, "8b4a85727abcfe35219ff1e754d0aef6e566dd16");
+  assert.equal(manifest.bytes, 464105592);
   assert.equal(manifest.notarized, false);
   assert.equal(manifest.audience, "owner-only");
   assert.equal(manifest.friendDownloadEnabled, false);
