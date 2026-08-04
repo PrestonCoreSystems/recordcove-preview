@@ -19,7 +19,7 @@ This early preview is ad-hoc signed and is not Apple-notarized. Install it only 
 
 ## Optional checksum check
 
-The preview page shows the exact SHA-256 checksum. If you are comfortable with Terminal, open Terminal, type `shasum -a 256 ` with a final space, drag the ZIP into the window, and press Return. The result must match the preview page exactly.
+The preview page shows the exact SHA-256 checksum. If you are comfortable with Terminal, open Terminal, type `shasum -a 256`, press the Space bar once, drag the ZIP into the window, and press Return. The result must match the preview page exactly.
 
 ## First launch
 
