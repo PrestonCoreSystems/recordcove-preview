@@ -1,0 +1,12 @@
+{
+  "product": "RecordCove",
+  "version": "0.1.0",
+  "sourceRevision": "63bbc086b96ede868719523b80ab0605ec9e13a4",
+  "file": "RecordCove-macOS-preview.zip",
+  "bytes": 464111370,
+  "sha256": "6e03ebcf15aeb97dfc506a626053e9dda82ecac4b5e7f112e3d945e9bac903c1",
+  "platform": "macOS 14 or later on Apple silicon",
+  "signing": "ad-hoc",
+  "notarized": false,
+  "publicReleaseApproved": false
+}

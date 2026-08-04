@@ -1,35 +1,47 @@
-# Private preview testing
+# Test the RecordCove preview
 
-Thank you for testing KeepVox. Use ordinary recordings you are authorized to
-make, and do not submit their content as feedback.
+Thank you for helping test RecordCove. Use only recordings you are legally allowed to make. You never need to share the recording or its written content to report a problem.
 
-## Useful checks
+## A simple first test
 
-- Start, stop, and save a short recording.
-- Play the saved local audio.
-- Transcribe a recording with an installed local transcription model.
-- Generate a summary with an installed local understanding model.
-- Copy a transcript and confirm the Copy state resets.
-- Create and edit a Quick Note.
-- Move an item to Recently Deleted, restore it, and verify the 30-day notice.
-- Quit and reopen KeepVox only when no recording is active.
+1. Open RecordCove.
+2. Complete the four onboarding screens.
+3. Confirm **Whisper Small English** is shown as included and verified.
+4. Select **New Recording**.
+5. Record about 20 seconds of ordinary, non-private speech.
+6. Select **Stop and Save**.
+7. Confirm the recording appears in **All Recordings** and does not say it was recovered after a normal save.
+8. Play the recording.
+9. Transcribe it with Whisper Small English.
+10. Confirm the transcript covers the full recording.
 
-## Report an issue
+## Everyday feature checks
 
-Open a GitHub Issue and include only:
+- Copy the transcript and confirm the button changes back from **Copied** to **Copy** after a short moment.
+- Generate a Summary with an installed Understanding model.
+- Try **Enhance** and confirm the original transcript remains available in Version History.
+- Try **Clean up** and confirm the original transcript remains available.
+- Create a Quick Note, type a title, press Return, and confirm the cursor moves into the note body.
+- Move the pointer over a note and confirm the row visibly highlights and looks clickable.
+- Move a recording or note to **Recently Deleted**, restore it, and confirm the 30-day recovery message.
+- Search, sort, and filter the recording list.
+- Quit and reopen RecordCove only when no recording is active, then confirm the library is still present.
 
-- the private-preview tag;
-- macOS version and Mac model class;
-- selected model name;
-- the screen or action involved;
-- expected behavior;
-- observed high-level behavior; and
-- an approximate timestamp if useful.
+## Long recording test
 
-Never attach or paste audio, recordings, transcripts, summaries, prompts,
-model output, tokens, credentials, personal filenames, or full local paths.
-Describe the behavior without reproducing private content.
+If you already have a long recording you are allowed to use, transcribe it and let RecordCove finish without interrupting it. Check that the beginning, middle, and end are represented and that transitions between processing segments do not cut words or create unrelated paragraph jumps. Do not send the audio or transcript when reporting the result.
 
-For a crash, say that a crash occurred and where in the workflow it happened.
-Wait for the maintainer to request a specifically scoped, content-free
-diagnostic before sharing any log excerpt.
+## Report useful feedback
+
+Tell the maintainer:
+
+- your macOS version;
+- your Mac type, such as MacBook Air with Apple silicon;
+- the RecordCove version and revision shown in About;
+- the selected transcription or Understanding model;
+- the screen and button you used;
+- what you expected;
+- what happened at a high level; and
+- the approximate time, if it helps locate a content-free operational event.
+
+Never attach or paste audio, recordings, transcripts, summaries, prompts, model output, tokens, credentials, personal filenames, or full local paths. For a crash, say only that a crash occurred and which workflow step you were using. Wait for a specifically scoped request before sharing any diagnostic information.

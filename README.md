@@ -1,32 +1,16 @@
-# KeepVox private preview
+# RecordCove preview operations
 
-Welcome to the invited KeepVox preview for macOS. This private repository is
-the download and feedback home for pre-release builds while Apple Developer
-Program enrollment, Developer ID signing, and notarization are in progress.
+This private repository controls the public RecordCove preview portal, release manifests, and non-technical tester guidance. The RecordCove product source, recordings, transcripts, model files, and signing credentials are not stored here.
 
-## Download
+The tester-facing portal is prepared for `https://preview.recordcove.com`. Preview binaries are revision-bound, checksum-pinned, and published separately from the portal only after the matching package evidence is verified.
 
-Open the [Releases page](../../releases), then choose the newest private
-preview and download:
+## Maintainer checklist
 
-- the `KeepVox-...zip` application archive;
-- `SHA256SUMS.txt` for integrity verification; and
-- the package-evidence JSON if you want to inspect the build identity.
+1. Verify the exact RecordCove Release package and its source revision.
+2. Confirm the package receipt says `publicReleaseApproved: false` and does not claim Developer ID signing or notarization.
+3. Publish the archive, manifest, and checksum through the governed preview workflow.
+4. Deploy the static portal through the shared Cloudflare Pages workflow.
+5. Test the portal, download, checksum, archive extraction, and first-launch instructions from a clean browser session.
+6. Keep public launch, Homebrew, Developer ID signing, notarization, and automatic updates outside this preview lane.
 
-Follow [INSTALL.md](INSTALL.md) before opening the app. This preview is not yet
-Apple-notarized, so macOS will require a one-app approval. Never disable
-Gatekeeper globally.
-
-## Feedback
-
-Use [Issues](../../issues) and follow [TESTING.md](TESTING.md). Do not upload or
-paste audio, recordings, transcripts, summaries, prompts, model output, tokens,
-credentials, personal filenames, or full local paths.
-
-## Access
-
-This repository and its releases are private. Access is only for invited
-testers and may be removed when the preview ends. The application and release
-assets are governed by [PRIVATE_PREVIEW_NOTICE.md](PRIVATE_PREVIEW_NOTICE.md).
-
-KeepVox source code and user content are not stored in this repository.
+Tester instructions are in [INSTALL.md](INSTALL.md) and [TESTING.md](TESTING.md). The distribution boundary is in [PRIVATE_PREVIEW_NOTICE.md](PRIVATE_PREVIEW_NOTICE.md).
