@@ -11,9 +11,12 @@ This preview is not yet Apple-notarized. macOS may block the first launch even w
 ## Download
 
 1. Open `https://preview.recordcove.com` in Safari, Chrome, or another browser.
-2. Select **Download RecordCove for Mac**.
-3. If your browser asks whether to allow the download, choose **Allow**.
-4. Wait for the download to finish. The file is large because the default English transcription model is included.
+2. Enter the email address where you want to receive the private access code.
+3. Open the message from Cloudflare and copy the one-time code. Check Spam or Junk if it does not arrive after a few minutes.
+4. Return to the browser, enter the code, and continue to the RecordCove preview page. You do not need a GitHub or RecordCove account.
+5. Select **Download RecordCove for Mac**. The download may ask for the same email code because the app file is protected separately.
+6. If your browser asks whether to allow the download, choose **Allow**.
+7. Wait for the download to finish. The file is large because the default English transcription model is included.
 
 The downloaded file normally appears in the **Downloads** folder. Open Finder, then select **Downloads** in the left sidebar to find it.
 
