@@ -33,7 +33,9 @@ If you already have a long recording you are allowed to use, transcribe it and l
 
 ## Report useful feedback
 
-Tell the maintainer:
+Select **Feedback** in RecordCove, or open the RecordCove board on Feedwish at `https://feedwish-dev.prestoncore.com/` in your browser. You can submit without an account and may add a display name if you want. Save the private management code shown after submission; it lets you check that feedback and permanently withdraw it later. Signing in is optional and is only needed to follow feedback over time.
+
+Include:
 
 - your macOS version;
 - your Mac type, such as MacBook Air with Apple silicon;
