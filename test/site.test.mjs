@@ -10,7 +10,7 @@ test("preview page carries current identity and safety boundary", async () => {
   assert.match(page, /not yet Apple-notarized/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
-  assert.equal(manifest.sourceRevision, "63bbc086b96ede868719523b80ab0605ec9e13a4");
+  assert.equal(manifest.sourceRevision, "766ec72bf4ef068134da07e282dfa83cefa2c8a5");
   assert.equal(manifest.notarized, false);
   assert.equal(manifest.publicReleaseApproved, false);
 });

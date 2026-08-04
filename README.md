@@ -1,8 +1,8 @@
 # RecordCove preview operations
 
-This private repository controls the public RecordCove preview portal, release manifests, and non-technical tester guidance. The RecordCove product source, recordings, transcripts, model files, and signing credentials are not stored here.
+This private repository controls the access-protected RecordCove preview portal, release manifests, and non-technical tester guidance. The RecordCove product source, recordings, transcripts, model files, and signing credentials are not stored here.
 
-The tester-facing portal is prepared for `https://preview.recordcove.com`. Preview binaries are revision-bound, checksum-pinned, and published separately from the portal only after the matching package evidence is verified.
+The tester-facing portal is prepared for `https://preview.recordcove.com` behind Cloudflare Access email verification. Preview binaries are revision-bound, checksum-pinned, and published separately from the portal only after the matching package evidence is verified.
 
 ## Maintainer checklist
 
