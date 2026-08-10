@@ -16,7 +16,7 @@
         <p class="eyebrow">macOS public preview</p>
         <h1 id="preview-title">Your voice, kept.</h1>
         <p class="lede">Record locally, transcribe locally, and turn important conversations into searchable written memory. Recording, transcription, and current local Understanding keep audio and written content on your Mac.</p>
-        <a class="button" href="https://github.com/PrestonCoreSystems/recordcove-preview/releases/download/v0.1.0-preview.4/RecordCove-macOS-preview.zip">Download RecordCove for Mac</a>
+        <a class="button" href="{{RECORDCOVE_DOWNLOAD_URL}}">Download RecordCove for Mac</a>
         <p class="facts">Version 0.1.0 · Apple silicon · macOS 14 or later · Pre-release</p>
       </section>
       <section class="panel" aria-labelledby="before-title">
@@ -41,9 +41,9 @@
       <section class="panel" aria-labelledby="download-title">
         <h2 id="download-title">Exact preview file</h2>
         <p><strong>File:</strong> <code>RecordCove-macOS-preview.zip</code></p>
-        <p><strong>Size:</strong> <code>464106206 bytes</code></p>
-        <p><strong>Source revision:</strong> <code>c5e63066bf56a25873a6457f560ed3a91f802d4c</code></p>
-        <p class="checksum"><strong>SHA-256:</strong> <code>07ca7ad4ba0355c7c82089653b70b8acd3fc1eaab499a7e655565693bc6dd565</code></p>
+        <p><strong>Size:</strong> <code>{{RECORDCOVE_ARCHIVE_BYTES}} bytes</code></p>
+        <p><strong>Source revision:</strong> <code>{{RECORDCOVE_SOURCE_REVISION}}</code></p>
+        <p class="checksum"><strong>SHA-256:</strong> <code>{{RECORDCOVE_ARCHIVE_SHA256}}</code></p>
         <p>This exact archive passed the local package verifier. It is ad-hoc signed, not Apple-notarized, not a production release, and not the Homebrew build.</p>
       </section>
     </main>

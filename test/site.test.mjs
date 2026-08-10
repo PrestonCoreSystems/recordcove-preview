@@ -4,13 +4,17 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { parse as parseYaml } from "yaml";
+import { renderPortal } from "../scripts/build.mjs";
 import { updateRelease } from "../scripts/update-release.mjs";
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 test("preview page carries the exact public preview package and safety boundary", async () => {
-  const page = await readFile("site/index.html", "utf8");
+  const template = await readFile("site/index.html", "utf8");
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
+  const page = renderPortal(template, manifest);
   assert.match(page, /RecordCove preview/);
-  assert.match(page, new RegExp(`href="${manifest.downloadUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
+  assert.match(page, new RegExp(`href="${escapeRegex(manifest.downloadUrl)}"`));
   assert.match(page, /not yet Apple-notarized/);
   assert.match(page, /Never disable Gatekeeper/);
   assert.doesNotMatch(page, /KeepVox/);
@@ -39,7 +43,8 @@ test("release updater changes only the next exact preview identity", async () =>
   const manifest = JSON.parse(
     await readFile(path.join(root, "site", "release-manifest.json"), "utf8"),
   );
-  const page = await readFile(path.join(root, "site", "index.html"), "utf8");
+  const template = await readFile(path.join(root, "site", "index.html"), "utf8");
+  const page = renderPortal(template, manifest);
   assert.equal(manifest.releaseTag, requested.releaseTag);
   assert.equal(manifest.sourceRevision, requested.sourceRevision);
   assert.equal(manifest.sha256, requested.archiveSha256);
@@ -47,6 +52,8 @@ test("release updater changes only the next exact preview identity", async () =>
   assert.match(page, new RegExp(requested.releaseTag));
   assert.match(page, new RegExp(requested.sourceRevision));
   assert.match(page, new RegExp(requested.archiveSha256));
+  assert.match(page, new RegExp(`href="${escapeRegex(manifest.downloadUrl)}"`));
+  assert.match(page, new RegExp(`<code>${manifest.bytes} bytes</code>`));
   assert.doesNotMatch(page, /v0\.1\.0-preview\.4/);
 });
 
@@ -71,6 +78,46 @@ test("release updater fails closed on skipped tags and symlinked controls", asyn
     updateRelease({ ...requested, releaseTag: "v0.1.0-preview.5" }),
     /regular non-symlink/,
   );
+});
+
+test("release updater leaves the sole release control unchanged before atomic commit", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-atomic-"));
+  await cp("site", path.join(root, "site"), { recursive: true });
+  const manifestPath = path.join(root, "site", "release-manifest.json");
+  const before = await readFile(manifestPath, "utf8");
+  await assert.rejects(
+    updateRelease({
+      root,
+      releaseTag: "v0.1.0-preview.5",
+      sourceRevision: "a".repeat(40),
+      archiveSha256: "b".repeat(64),
+      archiveBytes: "467833359",
+      beforeCommit: async () => {
+        throw new Error("injected failure");
+      },
+    }),
+    /injected failure/,
+  );
+  assert.equal(await readFile(manifestPath, "utf8"), before);
+
+  const concurrentRoot = await mkdtemp(
+    path.join(os.tmpdir(), "recordcove-preview-release-concurrent-"),
+  );
+  await cp("site", path.join(concurrentRoot, "site"), { recursive: true });
+  const concurrentManifestPath = path.join(concurrentRoot, "site", "release-manifest.json");
+  const concurrentContent = `${before.trimEnd()}\n `;
+  await assert.rejects(
+    updateRelease({
+      root: concurrentRoot,
+      releaseTag: "v0.1.0-preview.5",
+      sourceRevision: "a".repeat(40),
+      archiveSha256: "b".repeat(64),
+      archiveBytes: "467833359",
+      beforeCommit: () => writeFile(concurrentManifestPath, concurrentContent, "utf8"),
+    }),
+    /content changed/,
+  );
+  assert.equal(await readFile(concurrentManifestPath, "utf8"), concurrentContent);
 });
 
 test("release updater rejects malformed identity and changed safety controls", async () => {
