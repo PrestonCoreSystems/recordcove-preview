@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "release:update": "node scripts/update-release.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "devDependencies": {
