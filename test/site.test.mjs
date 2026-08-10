@@ -1,24 +1,103 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { parse as parseYaml } from "yaml";
+import { updateRelease } from "../scripts/update-release.mjs";
 
 test("preview page carries the exact public preview package and safety boundary", async () => {
   const page = await readFile("site/index.html", "utf8");
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
   assert.match(page, /RecordCove preview/);
-  assert.match(page, /href="https:\/\/github\.com\/PrestonCoreSystems\/recordcove-preview\/releases\/download\/v0\.1\.0-preview\.4\/RecordCove-macOS-preview\.zip"/);
+  assert.match(page, new RegExp(`href="${manifest.downloadUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   assert.match(page, /not yet Apple-notarized/);
   assert.match(page, /Never disable Gatekeeper/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
-  assert.equal(manifest.sourceRevision, "c5e63066bf56a25873a6457f560ed3a91f802d4c");
-  assert.equal(manifest.bytes, 464106206);
+  assert.match(manifest.sourceRevision, /^[0-9a-f]{40}$/);
+  assert.ok(Number.isSafeInteger(manifest.bytes) && manifest.bytes > 0);
   assert.equal(manifest.notarized, false);
   assert.equal(manifest.audience, "public-preview-testers");
   assert.equal(manifest.friendDownloadEnabled, true);
   assert.equal(manifest.publicReleaseApproved, false);
-  assert.equal(manifest.releaseTag, "v0.1.0-preview.4");
+  assert.match(manifest.releaseTag, /^v\d+\.\d+\.\d+-preview\.\d+$/);
+});
+
+test("release updater changes only the next exact preview identity", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-"));
+  await cp("site", path.join(root, "site"), { recursive: true });
+  const requested = {
+    root,
+    releaseTag: "v0.1.0-preview.5",
+    sourceRevision: "a".repeat(40),
+    archiveSha256: "b".repeat(64),
+    archiveBytes: "467833359",
+  };
+
+  await updateRelease(requested);
+  const manifest = JSON.parse(
+    await readFile(path.join(root, "site", "release-manifest.json"), "utf8"),
+  );
+  const page = await readFile(path.join(root, "site", "index.html"), "utf8");
+  assert.equal(manifest.releaseTag, requested.releaseTag);
+  assert.equal(manifest.sourceRevision, requested.sourceRevision);
+  assert.equal(manifest.sha256, requested.archiveSha256);
+  assert.equal(manifest.bytes, Number(requested.archiveBytes));
+  assert.match(page, new RegExp(requested.releaseTag));
+  assert.match(page, new RegExp(requested.sourceRevision));
+  assert.match(page, new RegExp(requested.archiveSha256));
+  assert.doesNotMatch(page, /v0\.1\.0-preview\.4/);
+});
+
+test("release updater fails closed on skipped tags and symlinked controls", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-negative-"));
+  await cp("site", path.join(root, "site"), { recursive: true });
+  const requested = {
+    root,
+    releaseTag: "v0.1.0-preview.6",
+    sourceRevision: "a".repeat(40),
+    archiveSha256: "b".repeat(64),
+    archiveBytes: "467833359",
+  };
+  await assert.rejects(updateRelease(requested), /next preview/);
+
+  const manifestPath = path.join(root, "site", "release-manifest.json");
+  const realManifestPath = path.join(root, "site", "release-manifest.real.json");
+  await cp(manifestPath, realManifestPath);
+  await unlink(manifestPath);
+  await symlink(realManifestPath, manifestPath);
+  await assert.rejects(
+    updateRelease({ ...requested, releaseTag: "v0.1.0-preview.5" }),
+    /regular non-symlink/,
+  );
+});
+
+test("release updater rejects malformed identity and changed safety controls", async () => {
+  const baseRequest = {
+    releaseTag: "v0.1.0-preview.5",
+    sourceRevision: "a".repeat(40),
+    archiveSha256: "b".repeat(64),
+    archiveBytes: "467833359",
+  };
+  for (const mutation of [
+    { sourceRevision: "A".repeat(40) },
+    { archiveSha256: "g".repeat(64) },
+    { archiveBytes: "0" },
+    { releaseTag: "v0.1.1-preview.5" },
+  ]) {
+    const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-invalid-"));
+    await cp("site", path.join(root, "site"), { recursive: true });
+    await assert.rejects(updateRelease({ root, ...baseRequest, ...mutation }));
+  }
+
+  const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-contract-"));
+  await cp("site", path.join(root, "site"), { recursive: true });
+  const manifestPath = path.join(root, "site", "release-manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.publicReleaseApproved = true;
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  await assert.rejects(updateRelease({ root, ...baseRequest }), /safety contract/);
 });
 
 test("non-technical guides explain the ZIP and safe first launch", async () => {
