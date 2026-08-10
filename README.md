@@ -17,3 +17,13 @@ The preview is not Apple-notarized and is not the public product launch. The por
 7. Keep Developer ID signing, notarization, Homebrew, trusted CI, and public product launch outside this preview lane.
 
 Tester instructions are in [INSTALL.md](INSTALL.md) and [TESTING.md](TESTING.md). The distribution boundary is in [PRIVATE_PREVIEW_NOTICE.md](PRIVATE_PREVIEW_NOTICE.md).
+
+## Continuous integration
+
+Every pull request and protected-main update runs the locked test and static-build pipeline on a GitHub-hosted runner.
+
+The public repository never routes pull-request code to a persistent self-hosted runner.
+
+RecordCove application packaging remains in the private product repository on the restricted M3 runner.
+
+Publication and Cloudflare deployment run separately on a GitHub-hosted runner so release and cloud credentials are never placed on the M3.
