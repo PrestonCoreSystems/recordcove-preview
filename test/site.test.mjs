@@ -33,3 +33,16 @@ test("non-technical guides explain the ZIP and safe first launch", async () => {
   assert.match(install, /Do not disable Gatekeeper/);
   assert.doesNotMatch(install, /quarantine-removal command/);
 });
+
+test("public preview CI stays on a GitHub-hosted least-privilege boundary", async () => {
+  const workflow = await readFile(".github/workflows/ci.yml", "utf8");
+  assert.match(workflow, /pull_request:/);
+  assert.match(workflow, /permissions:\n  contents: read/);
+  assert.match(workflow, /runs-on: ubuntu-latest/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /npm ci --ignore-scripts/);
+  assert.match(workflow, /npm test/);
+  assert.match(workflow, /npm run build/);
+  assert.doesNotMatch(workflow, /self-hosted|preston-apple|preston-shared/);
+  assert.doesNotMatch(workflow, /secrets\.|contents: write|pull_request_target/);
+});
