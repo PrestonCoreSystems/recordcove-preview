@@ -41,3 +41,39 @@ jobs:
 
       - name: Verify generated portal
         run: test -f dist/index.html
+
+  deploy:
+    name: Deploy protected Preview main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: recordcove-preview-production
+    concurrency:
+      group: recordcove-preview-production
+      cancel-in-progress: true
+    steps:
+      - name: Check out the accepted revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build the accepted portal
+        run: npm run build
+
+      - name: Deploy the accepted portal
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.103.0"
+          command: pages deploy dist --project-name=recordcove-preview --branch=main --commit-hash=${{ github.sha }} --commit-dirty=true
