@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -63,30 +63,40 @@ test("release updater changes only the next exact preview identity", async () =>
 test("release updater CLI resolves its repository independently of the caller directory", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-cli-root-"));
   const callerRoot = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-cli-caller-"));
-  await mkdir(path.join(root, "scripts"));
-  await cp("scripts/update-release.mjs", path.join(root, "scripts", "update-release.mjs"));
-  await cp("site", path.join(root, "site"), { recursive: true });
+  try {
+    await mkdir(path.join(root, "scripts"));
+    await cp("scripts/update-release.mjs", path.join(root, "scripts", "update-release.mjs"));
+    await cp("site", path.join(root, "site"), { recursive: true });
 
-  const sourceRevision = "c".repeat(40);
-  const archiveSha256 = "d".repeat(64);
-  const { stdout } = await execFileAsync(
-    process.execPath,
-    [
-      path.join(root, "scripts", "update-release.mjs"),
-      "v0.1.0-preview.5",
-      sourceRevision,
-      archiveSha256,
-      "467815498",
-    ],
-    { cwd: callerRoot },
-  );
+    const manifestPath = path.join(root, "site", "release-manifest.json");
+    const currentManifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const currentTag = /^v(\d+\.\d+\.\d+)-preview\.(\d+)$/.exec(currentManifest.releaseTag);
+    assert.ok(currentTag);
+    const nextPreviewTag = `v${currentTag[1]}-preview.${Number(currentTag[2]) + 1}`;
+    const sourceRevision = "c".repeat(40);
+    const archiveSha256 = "d".repeat(64);
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [
+        path.join(root, "scripts", "update-release.mjs"),
+        nextPreviewTag,
+        sourceRevision,
+        archiveSha256,
+        "467815498",
+      ],
+      { cwd: callerRoot },
+    );
 
-  assert.equal(stdout, "RELEASE_UPDATE=OK\n");
-  const manifest = JSON.parse(
-    await readFile(path.join(root, "site", "release-manifest.json"), "utf8"),
-  );
-  assert.equal(manifest.sourceRevision, sourceRevision);
-  assert.equal(manifest.sha256, archiveSha256);
+    assert.equal(stdout, "RELEASE_UPDATE=OK\n");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    assert.equal(manifest.sourceRevision, sourceRevision);
+    assert.equal(manifest.sha256, archiveSha256);
+  } finally {
+    await Promise.all([
+      rm(root, { recursive: true, force: true }),
+      rm(callerRoot, { recursive: true, force: true }),
+    ]);
+  }
 });
 
 test("release updater fails closed on skipped tags and symlinked controls", async () => {
