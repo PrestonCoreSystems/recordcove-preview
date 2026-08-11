@@ -12,6 +12,19 @@ import { updateRelease } from "../scripts/update-release.mjs";
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const execFileAsync = promisify(execFile);
 
+async function previewTags(root) {
+  const manifestPath = path.join(root, "site", "release-manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const match = /^v(\d+\.\d+\.\d+)-preview\.(\d+)$/.exec(manifest.releaseTag);
+  assert.ok(match);
+  const previewNumber = Number(match[2]);
+  return {
+    current: manifest.releaseTag,
+    next: `v${match[1]}-preview.${previewNumber + 1}`,
+    skipped: `v${match[1]}-preview.${previewNumber + 2}`,
+  };
+}
+
 test("preview page carries the exact public preview package and safety boundary", async () => {
   const template = await readFile("site/index.html", "utf8");
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
@@ -34,9 +47,10 @@ test("preview page carries the exact public preview package and safety boundary"
 test("release updater changes only the next exact preview identity", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-"));
   await cp("site", path.join(root, "site"), { recursive: true });
+  const tags = await previewTags(root);
   const requested = {
     root,
-    releaseTag: "v0.1.0-preview.5",
+    releaseTag: tags.next,
     sourceRevision: "a".repeat(40),
     archiveSha256: "b".repeat(64),
     archiveBytes: "467833359",
@@ -57,7 +71,7 @@ test("release updater changes only the next exact preview identity", async () =>
   assert.match(page, new RegExp(requested.archiveSha256));
   assert.match(page, new RegExp(`href="${escapeRegex(manifest.downloadUrl)}"`));
   assert.match(page, new RegExp(`<code>${manifest.bytes} bytes</code>`));
-  assert.doesNotMatch(page, /v0\.1\.0-preview\.4/);
+  assert.doesNotMatch(page, new RegExp(escapeRegex(tags.current)));
 });
 
 test("release updater CLI resolves its repository independently of the caller directory", async () => {
@@ -69,17 +83,14 @@ test("release updater CLI resolves its repository independently of the caller di
     await cp("site", path.join(root, "site"), { recursive: true });
 
     const manifestPath = path.join(root, "site", "release-manifest.json");
-    const currentManifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    const currentTag = /^v(\d+\.\d+\.\d+)-preview\.(\d+)$/.exec(currentManifest.releaseTag);
-    assert.ok(currentTag);
-    const nextPreviewTag = `v${currentTag[1]}-preview.${Number(currentTag[2]) + 1}`;
+    const tags = await previewTags(root);
     const sourceRevision = "c".repeat(40);
     const archiveSha256 = "d".repeat(64);
     const { stdout } = await execFileAsync(
       process.execPath,
       [
         path.join(root, "scripts", "update-release.mjs"),
-        nextPreviewTag,
+        tags.next,
         sourceRevision,
         archiveSha256,
         "467815498",
@@ -102,9 +113,10 @@ test("release updater CLI resolves its repository independently of the caller di
 test("release updater fails closed on skipped tags and symlinked controls", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-negative-"));
   await cp("site", path.join(root, "site"), { recursive: true });
+  const tags = await previewTags(root);
   const requested = {
     root,
-    releaseTag: "v0.1.0-preview.6",
+    releaseTag: tags.skipped,
     sourceRevision: "a".repeat(40),
     archiveSha256: "b".repeat(64),
     archiveBytes: "467833359",
@@ -117,7 +129,7 @@ test("release updater fails closed on skipped tags and symlinked controls", asyn
   await unlink(manifestPath);
   await symlink(realManifestPath, manifestPath);
   await assert.rejects(
-    updateRelease({ ...requested, releaseTag: "v0.1.0-preview.5" }),
+    updateRelease({ ...requested, releaseTag: tags.next }),
     /regular non-symlink/,
   );
 });
@@ -125,12 +137,13 @@ test("release updater fails closed on skipped tags and symlinked controls", asyn
 test("release updater leaves the sole release control unchanged before atomic commit", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-atomic-"));
   await cp("site", path.join(root, "site"), { recursive: true });
+  const tags = await previewTags(root);
   const manifestPath = path.join(root, "site", "release-manifest.json");
   const before = await readFile(manifestPath, "utf8");
   await assert.rejects(
     updateRelease({
       root,
-      releaseTag: "v0.1.0-preview.5",
+      releaseTag: tags.next,
       sourceRevision: "a".repeat(40),
       archiveSha256: "b".repeat(64),
       archiveBytes: "467833359",
@@ -146,12 +159,13 @@ test("release updater leaves the sole release control unchanged before atomic co
     path.join(os.tmpdir(), "recordcove-preview-release-concurrent-"),
   );
   await cp("site", path.join(concurrentRoot, "site"), { recursive: true });
+  const concurrentTags = await previewTags(concurrentRoot);
   const concurrentManifestPath = path.join(concurrentRoot, "site", "release-manifest.json");
   const concurrentContent = `${before.trimEnd()}\n `;
   await assert.rejects(
     updateRelease({
       root: concurrentRoot,
-      releaseTag: "v0.1.0-preview.5",
+      releaseTag: concurrentTags.next,
       sourceRevision: "a".repeat(40),
       archiveSha256: "b".repeat(64),
       archiveBytes: "467833359",
@@ -164,7 +178,6 @@ test("release updater leaves the sole release control unchanged before atomic co
 
 test("release updater rejects malformed identity and changed safety controls", async () => {
   const baseRequest = {
-    releaseTag: "v0.1.0-preview.5",
     sourceRevision: "a".repeat(40),
     archiveSha256: "b".repeat(64),
     archiveBytes: "467833359",
@@ -177,16 +190,23 @@ test("release updater rejects malformed identity and changed safety controls", a
   ]) {
     const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-invalid-"));
     await cp("site", path.join(root, "site"), { recursive: true });
-    await assert.rejects(updateRelease({ root, ...baseRequest, ...mutation }));
+    const tags = await previewTags(root);
+    await assert.rejects(
+      updateRelease({ root, releaseTag: tags.next, ...baseRequest, ...mutation }),
+    );
   }
 
   const root = await mkdtemp(path.join(os.tmpdir(), "recordcove-preview-release-contract-"));
   await cp("site", path.join(root, "site"), { recursive: true });
+  const tags = await previewTags(root);
   const manifestPath = path.join(root, "site", "release-manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.publicReleaseApproved = true;
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  await assert.rejects(updateRelease({ root, ...baseRequest }), /safety contract/);
+  await assert.rejects(
+    updateRelease({ root, releaseTag: tags.next, ...baseRequest }),
+    /safety contract/,
+  );
 });
 
 test("non-technical guides explain the ZIP and safe first launch", async () => {
