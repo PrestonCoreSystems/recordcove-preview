@@ -165,11 +165,25 @@ async function main() {
       "usage: update-release.mjs <release-tag> <source-revision> <archive-sha256> <archive-bytes>",
     );
   }
-  await updateRelease({ releaseTag, sourceRevision, archiveSha256, archiveBytes });
+  const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  await updateRelease({
+    root: repositoryRoot,
+    releaseTag,
+    sourceRevision,
+    archiveSha256,
+    archiveBytes,
+  });
   process.stdout.write("RELEASE_UPDATE=OK\n");
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+async function isMainModule() {
+  if (!process.argv[1]) {
+    return false;
+  }
+  return (await realpath(process.argv[1])) === (await realpath(fileURLToPath(import.meta.url)));
+}
+
+if (await isMainModule()) {
   main().catch((error) => {
     process.stderr.write(`RELEASE_UPDATE=FAILED: ${error.message}\n`);
     process.exitCode = 2;
