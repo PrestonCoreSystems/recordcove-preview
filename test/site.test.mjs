@@ -223,7 +223,7 @@ test("non-technical guides explain the ZIP and safe first launch", async () => {
   assert.doesNotMatch(install, /quarantine-removal command/);
 });
 
-test("public preview CI stays on a GitHub-hosted least-privilege boundary", async () => {
+test("public preview CI and deploy stay on GitHub-hosted least-privilege boundaries", async () => {
   const workflow = await readFile(".github/workflows/ci.yml", "utf8");
   const parsed = parseYaml(workflow);
   assert.deepEqual(Object.keys(parsed.on).sort(), ["pull_request", "push"]);
@@ -234,7 +234,7 @@ test("public preview CI stays on a GitHub-hosted least-privilege boundary", asyn
     group: "recordcove-preview-ci-${{ github.ref }}",
     "cancel-in-progress": true,
   });
-  assert.deepEqual(Object.keys(parsed.jobs), ["verify"]);
+  assert.deepEqual(Object.keys(parsed.jobs), ["verify", "deploy"]);
   const verify = parsed.jobs.verify;
   assert.equal(verify["runs-on"], "ubuntu-latest");
   assert.equal(verify["timeout-minutes"], 10);
@@ -254,8 +254,47 @@ test("public preview CI stays on a GitHub-hosted least-privilege boundary", asyn
   assert.equal(verify.steps[3].run, "npm test");
   assert.equal(verify.steps[4].run, "npm run build");
   assert.equal(verify.steps[5].run, "test -f dist/index.html");
+  assert.doesNotMatch(JSON.stringify(verify), /secrets/i);
+
+  const deploy = parsed.jobs.deploy;
+  assert.equal(
+    deploy.if,
+    "github.event_name == 'push' && github.ref == 'refs/heads/main'",
+  );
+  assert.equal(deploy.needs, "verify");
+  assert.equal(deploy["runs-on"], "ubuntu-latest");
+  assert.equal(deploy["timeout-minutes"], 10);
+  assert.equal(deploy.environment, "recordcove-preview-production");
+  assert.deepEqual(deploy.concurrency, {
+    group: "recordcove-preview-production",
+    "cancel-in-progress": true,
+  });
+  assert.deepEqual(
+    deploy.steps.map((step) => step.name),
+    [
+      "Check out the accepted revision",
+      "Set up Node.js",
+      "Install locked dependencies",
+      "Build the accepted portal",
+      "Deploy the accepted portal",
+    ],
+  );
+  assert.equal(deploy.steps[0].with["persist-credentials"], false);
+  assert.equal(deploy.steps[2].run, "npm ci --ignore-scripts");
+  assert.equal(deploy.steps[3].run, "npm run build");
+  assert.equal(
+    deploy.steps[4].uses,
+    "cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0",
+  );
+  assert.deepEqual(deploy.steps[4].with, {
+    apiToken: "${{ secrets.CLOUDFLARE_API_TOKEN }}",
+    accountId: "${{ vars.CLOUDFLARE_ACCOUNT_ID }}",
+    wranglerVersion: "4.103.0",
+    command:
+      "pages deploy dist --project-name=recordcove-preview --branch=main --commit-hash=${{ github.sha }} --commit-dirty=true",
+  });
   assert.doesNotMatch(
     JSON.stringify(parsed),
-    /secrets|self-hosted|preston-apple|preston-shared|pull_request_target|:\s*write/i,
+    /self-hosted|preston-apple|preston-shared|pull_request_target|:\s*write/i,
   );
 });
