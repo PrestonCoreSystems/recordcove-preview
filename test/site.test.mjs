@@ -33,6 +33,9 @@ test("preview page carries the exact public preview package and safety boundary"
   assert.match(page, new RegExp(`href="${escapeRegex(manifest.downloadUrl)}"`));
   assert.match(page, /not yet Apple-notarized/);
   assert.match(page, /Never disable Gatekeeper/);
+  assert.match(page, /North America, Europe, and Africa/);
+  assert.match(page, /mainland China are outside the current evaluation and packaging scope/);
+  assert.match(page, /not a claim that included models are universally better/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
   assert.match(manifest.sourceRevision, /^[0-9a-f]{40}$/);

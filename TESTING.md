@@ -2,6 +2,8 @@
 
 Thank you for helping test RecordCove. Use only recordings you are legally allowed to make. You never need to share the recording or its written content to report a problem.
 
+The preview currently focuses model discovery and qualification on developers and originating model families from North America, Europe, and Africa. Models originating from mainland China are outside the current evaluation and packaging scope. This boundary explains the available choices; it is not a comparative quality or privacy claim.
+
 ## A simple first test
 
 1. Open RecordCove.

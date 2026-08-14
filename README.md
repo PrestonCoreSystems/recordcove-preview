@@ -6,6 +6,12 @@ The tester portal is `https://preview.recordcove.com`. The exact archive is atta
 
 The preview is not Apple-notarized and is not the public product launch. The portal must retain that warning and the standard Finder control-click **Open** instructions. It must never tell testers to disable Gatekeeper or run a quarantine-removal command.
 
+## Current model scope
+
+For this preview, RecordCove focuses model discovery, qualification, and packaging on model developers and originating model families from North America, Europe, and Africa. Models originating from mainland China are outside the current evaluation and packaging scope.
+
+This is a current release-scope and supply-chain qualification decision. It is not a claim that an included model is universally better, that an excluded model is lower quality, or that developer region proves local privacy.
+
 ## Maintainer checklist
 
 1. Verify the exact clean RecordCove owner-preview package and source revision.
