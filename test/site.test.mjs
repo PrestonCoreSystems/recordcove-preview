@@ -45,8 +45,8 @@ test("preview page carries the exact public preview package and safety boundary"
   assert.match(page, /not a claim that included models are universally better/);
   assert.match(page, /Whisper Small English/);
   assert.match(page, /IBM Granite 4\.1 3B/);
-  assert.match(page, /about 2\.53 GB as a ZIP/);
-  assert.match(page, /download will remain unavailable/);
+  assert.match(page, /latest preview is about 2\.53 GB/);
+  assert.match(page, /verified download is available from the Preview downloads page/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
   assert.match(manifest.sourceRevision, /^[0-9a-f]{40}$/);
