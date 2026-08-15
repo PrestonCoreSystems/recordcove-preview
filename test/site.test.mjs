@@ -248,6 +248,31 @@ test("downloads page exposes accepted preview history and browser-local update t
   }
 });
 
+test("all public pages use the versioned responsive stylesheet", async () => {
+  for (const filename of ["index.html", "downloads.html", "install.html", "testing.html"]) {
+    const page = await readFile(path.join("site", filename), "utf8");
+    assert.match(page, /href="\/styles\.css\?v=3"/);
+    assert.doesNotMatch(page, /href="\/styles\.css"/);
+  }
+
+  const styles = await readFile("site/styles.css", "utf8");
+  assert.match(styles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /@media \(max-width: 520px\)/);
+  assert.match(styles, /\.site-nav \{ position: sticky/);
+});
+
+test("overview shows a privacy-safe local app preview", async () => {
+  const page = await readFile("site/index.html", "utf8");
+  const image = await readFile("site/assets/recordcove-app-preview.svg", "utf8");
+  assert.match(page, /A calm workspace for local recordings/);
+  assert.match(page, /recordcove-app-preview\.svg\?v=1/);
+  assert.match(page, /Privacy-safe product preview using sample content/);
+  assert.match(image, /RecordCove/);
+  assert.match(image, /Sample recording/);
+  assert.doesNotMatch(image, /\/Users\//);
+  assert.doesNotMatch(image, /KeepVox/);
+});
+
 test("release catalog accepts only manifest-bounded exact GitHub assets", async () => {
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
   const release = (tag, overrides = {}) => ({
