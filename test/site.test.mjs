@@ -322,7 +322,12 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
     ],
     ...overrides,
   });
-  const current = release(manifest.releaseTag);
+  const current = manifest.downloadUrl.startsWith("https://downloads.preview.recordcove.com/")
+    ? release(manifest.releaseTag, {
+        assets: [],
+        body: `Verified download: ${manifest.downloadUrl}`,
+      })
+    : release(manifest.releaseTag);
   const previousTag = "v0.1.0-preview.7";
   const previous = release(previousTag, {
     published_at: "2026-08-15T04:12:01Z",
@@ -336,7 +341,13 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
       },
     ],
   });
-  const future = release("v0.1.0-preview.9");
+  const currentPreviewNumber = Number(manifest.releaseTag.match(/preview\.(\d+)$/)?.[1]);
+  assert.ok(Number.isSafeInteger(currentPreviewNumber));
+  const nextPreviewTag = manifest.releaseTag.replace(
+    /preview\.\d+$/,
+    `preview.${currentPreviewNumber + 1}`,
+  );
+  const future = release(nextPreviewTag);
   const invalid = release("v0.1.0-preview.6", {
     html_url: "https://example.com/untrusted",
   });
@@ -347,10 +358,28 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
     [manifest.releaseTag, previousTag],
   );
 
+  const legacyTag = "v0.1.0-preview.8";
+  const legacyManifest = {
+    releaseTag: legacyTag,
+    downloadUrl: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/download/${legacyTag}/RecordCove-macOS-preview.zip`,
+    bytes: 467841491,
+    sha256: "135467bc95d15f51fe2cc383dbe8d20ea3b7e2c0009ba06f9cd07e74e50a758d",
+  };
+  const legacyCurrent = release(legacyTag, {
+    assets: [
+      {
+        name: "RecordCove-macOS-preview.zip",
+        state: "uploaded",
+        size: legacyManifest.bytes,
+        digest: `sha256:${legacyManifest.sha256}`,
+        browser_download_url: legacyManifest.downloadUrl,
+      },
+    ],
+  });
   const r2Tag = "v0.1.0-preview.9";
   const r2DownloadUrl = `https://downloads.preview.recordcove.com/previews/${r2Tag}/RecordCove-macOS-preview.zip`;
   const r2Manifest = {
-    ...manifest,
+    ...legacyManifest,
     releaseTag: r2Tag,
     downloadUrl: r2DownloadUrl,
     bytes: 2600000000,
@@ -361,11 +390,11 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
     body: `Verified download: ${r2DownloadUrl}`,
   });
   assert.deepEqual(
-    acceptedReleases([r2Current, current, previous], r2Manifest).map(({ tag }) => tag),
-    [r2Tag, manifest.releaseTag, previousTag],
+    acceptedReleases([r2Current, legacyCurrent, previous], r2Manifest).map(({ tag }) => tag),
+    [r2Tag, legacyTag, previousTag],
   );
   assert.equal(normalizeRelease({ ...r2Current, body: "" }, r2Manifest), null);
-  assert.equal(normalizeRelease({ ...r2Current, assets: current.assets }, r2Manifest), null);
+  assert.equal(normalizeRelease({ ...r2Current, assets: legacyCurrent.assets }, r2Manifest), null);
 });
 
 test("download state distinguishes current and newer accepted previews", () => {
