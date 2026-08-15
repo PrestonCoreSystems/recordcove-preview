@@ -11,12 +11,18 @@
   </head>
   <body>
     <main>
+      <nav class="site-nav" aria-label="Preview pages">
+        <a aria-current="page" href="/">Overview</a>
+        <a href="/downloads.html">Downloads</a>
+        <a href="/install.html">Install</a>
+        <a href="/testing.html">Testing</a>
+      </nav>
       <section class="hero" aria-labelledby="preview-title">
         <img class="mark" src="/assets/recordcove-mark.svg" alt="">
         <p class="eyebrow">macOS public preview</p>
         <h1 id="preview-title">Your voice, kept.</h1>
         <p class="lede">Record locally, transcribe locally, and turn important conversations into searchable written memory. Recording, transcription, and current local Understanding keep audio and written content on your Mac.</p>
-        <a class="button" href="{{RECORDCOVE_DOWNLOAD_URL}}">Download RecordCove for Mac</a>
+        <a class="button" href="/downloads.html">Choose a RecordCove preview</a>
         <p class="facts">Version 0.1.0 · Apple silicon · macOS 14 or later · Pre-release</p>
       </section>
       <section class="panel" aria-labelledby="before-title">
@@ -28,6 +34,7 @@
           <li>Follow the detailed first-launch steps. Never disable Gatekeeper or run a quarantine-removal command.</li>
         </ol>
         <div class="links">
+          <a href="/downloads.html">Browse preview downloads</a>
           <a href="/install.html">Read the detailed installation guide</a>
           <a href="/testing.html">See what to test</a>
           <a href="https://feedwish-dev.prestoncore.com/">Report feedback on Feedwish</a>
@@ -50,6 +57,7 @@
         <p><strong>Source revision:</strong> <code>{{RECORDCOVE_SOURCE_REVISION}}</code></p>
         <p class="checksum"><strong>SHA-256:</strong> <code>{{RECORDCOVE_ARCHIVE_SHA256}}</code></p>
         <p>This exact archive passed the local package verifier. It is ad-hoc signed, not Apple-notarized, not a production release, and not the Homebrew build.</p>
+        <div class="links"><a href="{{RECORDCOVE_DOWNLOAD_URL}}">Direct download of the latest accepted archive</a></div>
       </section>
     </main>
     <footer>Copyright <span id="year"></span> Preston Core Systems Limited. RecordCove preview.</footer>

@@ -8,6 +8,13 @@ import { promisify } from "node:util";
 import { parse as parseYaml } from "yaml";
 import { renderPortal } from "../scripts/build.mjs";
 import { updateRelease } from "../scripts/update-release.mjs";
+import {
+  acceptedReleases,
+  compareReleaseTags,
+  downloadState,
+  fetchReleasePages,
+  normalizeRelease,
+} from "../site/downloads.mjs";
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const execFileAsync = promisify(execFile);
@@ -224,6 +231,105 @@ test("non-technical guides explain the ZIP and safe first launch", async () => {
   assert.doesNotMatch(`${install}\n${testing}`, /GitHub account/);
   assert.match(install, /Do not disable Gatekeeper/);
   assert.doesNotMatch(install, /quarantine-removal command/);
+});
+
+test("downloads page exposes accepted preview history and browser-local update tracking", async () => {
+  const page = await readFile("site/downloads.html", "utf8");
+  const index = await readFile("site/index.html", "utf8");
+  const install = await readFile("site/install.html", "utf8");
+  const testing = await readFile("site/testing.html", "utf8");
+  assert.match(page, /Preview downloads/);
+  assert.match(page, /Latest accepted preview/);
+  assert.match(page, /Previous previews/);
+  assert.match(page, /stored only in this browser/);
+  assert.match(page, /downloads\.mjs/);
+  for (const document of [index, install, testing]) {
+    assert.match(document, /href="\/downloads\.html"/);
+  }
+});
+
+test("release catalog accepts only manifest-bounded exact GitHub assets", async () => {
+  const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
+  const release = (tag, overrides = {}) => ({
+    tag_name: tag,
+    name: `RecordCove ${tag}`,
+    draft: false,
+    prerelease: true,
+    published_at: "2026-08-15T07:55:59Z",
+    html_url: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/tag/${tag}`,
+    assets: [
+      {
+        name: "RecordCove-macOS-preview.zip",
+        state: "uploaded",
+        size: manifest.bytes,
+        digest: `sha256:${manifest.sha256}`,
+        browser_download_url: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/download/${tag}/RecordCove-macOS-preview.zip`,
+      },
+    ],
+    ...overrides,
+  });
+  const current = release(manifest.releaseTag);
+  const previousTag = "v0.1.0-preview.7";
+  const previous = release(previousTag, {
+    published_at: "2026-08-15T04:12:01Z",
+    assets: [
+      {
+        name: "RecordCove-macOS-preview.zip",
+        state: "uploaded",
+        size: 467819479,
+        digest: `sha256:${"4f94f65772c2ef3e47daca8c945e313feb1bb76b019482205dd9a58a0db8fd96"}`,
+        browser_download_url: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/download/${previousTag}/RecordCove-macOS-preview.zip`,
+      },
+    ],
+  });
+  const future = release("v0.1.0-preview.9");
+  const invalid = release("v0.1.0-preview.6", {
+    html_url: "https://example.com/untrusted",
+  });
+  assert.equal(normalizeRelease(invalid), null);
+  assert.ok(compareReleaseTags(manifest.releaseTag, previousTag) > 0);
+  assert.deepEqual(
+    acceptedReleases([future, previous, invalid, current], manifest).map(({ tag }) => tag),
+    [manifest.releaseTag, previousTag],
+  );
+});
+
+test("download state distinguishes current and newer accepted previews", () => {
+  assert.equal(downloadState("v0.1.0-preview.8", null).kind, "none");
+  assert.equal(
+    downloadState("v0.1.0-preview.8", { releaseTag: "v0.1.0-preview.8" }).kind,
+    "current",
+  );
+  assert.equal(
+    downloadState("v0.1.0-preview.8", { releaseTag: "v0.1.0-preview.7" }).kind,
+    "update",
+  );
+});
+
+test("release history paginates until a later-page manifest release is retained", async () => {
+  const manifestTag = "v0.1.0-preview.8";
+  const firstPage = Array.from({ length: 100 }, (_, index) => ({
+    tag_name: `v0.1.0-preview.${108 - index}`,
+  }));
+  const secondPage = [
+    { tag_name: manifestTag },
+    { tag_name: "v0.1.0-preview.7" },
+    { tag_name: "v0.1.0-preview.6" },
+  ];
+  const requestedUrls = [];
+  const releases = await fetchReleasePages(async (url) => {
+    requestedUrls.push(url);
+    return {
+      ok: true,
+      json: async () => (url.endsWith("page=1") ? firstPage : secondPage),
+    };
+  }, manifestTag);
+  assert.equal(requestedUrls.length, 2);
+  assert.match(requestedUrls[0], /per_page=100&page=1$/);
+  assert.match(requestedUrls[1], /per_page=100&page=2$/);
+  assert.equal(releases.length, 103);
+  assert.equal(releases[100].tag_name, manifestTag);
+  assert.equal(releases[102].tag_name, "v0.1.0-preview.6");
 });
 
 test("public preview CI and deploy stay on GitHub-hosted least-privilege boundaries", async () => {

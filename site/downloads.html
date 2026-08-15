@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Browse current and previous RecordCove macOS preview downloads.">
+    <meta name="color-scheme" content="light">
+    <title>RecordCove preview downloads</title>
+    <link rel="icon" href="/assets/recordcove-mark.svg?v=1" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <nav class="site-nav" aria-label="Preview pages">
+        <a href="/">Overview</a>
+        <a aria-current="page" href="/downloads.html">Downloads</a>
+        <a href="/install.html">Install</a>
+        <a href="/testing.html">Testing</a>
+      </nav>
+      <section class="download-intro" aria-labelledby="downloads-title">
+        <p class="eyebrow">macOS public preview</p>
+        <h1 id="downloads-title">Preview downloads</h1>
+        <p class="lede">Choose the newest preview or return to an earlier version. This browser remembers the version you select, making it easier to notice when an update is available.</p>
+      </section>
+      <div id="download-status" class="download-status" role="status" aria-live="polite">
+        Loading the verified preview history…
+      </div>
+      <section class="panel" aria-labelledby="latest-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow compact">Recommended</p>
+            <h2 id="latest-title">Latest accepted preview</h2>
+          </div>
+        </div>
+        <div id="latest-release" class="release-list" aria-live="polite"></div>
+      </section>
+      <section class="panel" aria-labelledby="history-title">
+        <h2 id="history-title">Previous previews</h2>
+        <p>Older builds remain available for comparison and troubleshooting. For normal testing, use the latest accepted preview above.</p>
+        <div id="release-history" class="release-list" aria-live="polite"></div>
+      </section>
+      <section class="panel" aria-labelledby="remember-title">
+        <h2 id="remember-title">How version tracking works</h2>
+        <p>The marker is stored only in this browser when you select a download. It is not an account, it is not uploaded, and it cannot confirm that the download or installation finished.</p>
+        <p>GitHub currently serves the verified archive as <code>RecordCove-macOS-preview.zip</code>. The Downloads page records the exact preview version beside it; the installed app remains named <strong>RecordCove</strong>.</p>
+      </section>
+    </main>
+    <footer>Copyright <span id="year"></span> Preston Core Systems Limited. RecordCove preview.</footer>
+    <script type="module" src="/downloads.mjs"></script>
+  </body>
+</html>

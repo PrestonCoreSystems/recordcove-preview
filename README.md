@@ -4,6 +4,8 @@ This public, preview-only repository controls the RecordCove pre-release portal,
 
 The tester portal is `https://preview.recordcove.com`. The exact archive is attached to the manifest-pinned public GitHub prerelease after its revision, byte size, SHA-256 checksum, bundle identity, and ad-hoc signature are verified. Testers do not need a GitHub account to download a public release asset.
 
+The Downloads page reads the public GitHub prerelease inventory and displays only releases at or below the manifest-pinned accepted preview. The newest displayed asset must match the manifest URL, byte size, and SHA-256 digest exactly. A newer staged GitHub prerelease is therefore not promoted before its manifest is accepted. The page remembers the last selected version only in that browser's local storage; no download history is uploaded.
+
 The preview is not Apple-notarized and is not the public product launch. The portal must retain that warning and the standard Finder control-click **Open** instructions. It must never tell testers to disable Gatekeeper or run a quarantine-removal command.
 
 ## Current model scope
