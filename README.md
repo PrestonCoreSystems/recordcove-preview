@@ -23,6 +23,8 @@ This is a current release-scope and supply-chain qualification decision. It is n
 5. Upload the exact archive only to the manifest-pinned public prerelease.
 6. Verify the portal, download, checksum, extraction, and first-launch guide from an independent browser session.
 7. Keep Developer ID signing, notarization, Homebrew, trusted CI, and public product launch outside this preview lane.
+8. Use only privacy-safe product imagery with synthetic content. Public screenshots must never show a real recording, transcript, summary, prompt, model output, filename, path, category, tag, or other user data.
+9. Version static CSS and image URLs when their bytes change so cached preview pages cannot combine new markup with stale presentation rules.
 
 Tester instructions are in [INSTALL.md](INSTALL.md) and [TESTING.md](TESTING.md). The distribution boundary is in [PRIVATE_PREVIEW_NOTICE.md](PRIVATE_PREVIEW_NOTICE.md).
 
