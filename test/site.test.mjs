@@ -353,7 +353,7 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
     ...manifest,
     releaseTag: r2Tag,
     downloadUrl: r2DownloadUrl,
-    bytes: 2528517650,
+    bytes: 2600000000,
     sha256: "a".repeat(64),
   };
   const r2Current = release(r2Tag, {
