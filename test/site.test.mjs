@@ -43,6 +43,10 @@ test("preview page carries the exact public preview package and safety boundary"
   assert.match(page, /North America, Europe, and Africa/);
   assert.match(page, /mainland China are outside the current evaluation and packaging scope/);
   assert.match(page, /not a claim that included models are universally better/);
+  assert.match(page, /Whisper Small English/);
+  assert.match(page, /IBM Granite 4\.1 3B/);
+  assert.match(page, /about 2\.53 GB as a ZIP/);
+  assert.match(page, /download will remain unavailable/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
   assert.match(manifest.sourceRevision, /^[0-9a-f]{40}$/);
@@ -76,6 +80,10 @@ test("release updater changes only the next exact preview identity", async () =>
   assert.equal(manifest.sourceRevision, requested.sourceRevision);
   assert.equal(manifest.sha256, requested.archiveSha256);
   assert.equal(manifest.bytes, Number(requested.archiveBytes));
+  assert.equal(
+    manifest.downloadUrl,
+    `https://downloads.preview.recordcove.com/previews/${requested.releaseTag}/RecordCove-macOS-preview.zip`,
+  );
   assert.match(page, new RegExp(requested.releaseTag));
   assert.match(page, new RegExp(requested.sourceRevision));
   assert.match(page, new RegExp(requested.archiveSha256));
@@ -221,16 +229,36 @@ test("release updater rejects malformed identity and changed safety controls", a
 
 test("non-technical guides explain the ZIP and safe first launch", async () => {
   const install = await readFile("INSTALL.md", "utf8");
+  const installPage = await readFile("site/install.html", "utf8");
   const testing = await readFile("TESTING.md", "utf8");
   assert.match(install, /Double-click `RecordCove-macOS-preview\.zip`/);
-  assert.match(install, /Hold the Control key/);
+  for (const guide of [install, installPage]) {
+    assert.match(guide, /at least 6 GB/);
+    assert.match(guide, /Whisper Small English/);
+    assert.match(guide, /IBM Granite 4\.1 3B/);
+    assert.match(guide, /2\.53 GB/);
+    assert.match(guide, /Move to Bin/);
+    assert.match(guide, /Done/);
+    assert.match(guide, /System Settings/);
+    assert.match(guide, /Privacy &amp; Security|Privacy & Security/);
+    assert.match(guide, /Open Anyway/);
+    assert.match(guide, /password or Touch ID/);
+    assert.match(guide, /select <strong>Open<\/strong>|select \*\*Open\*\*/);
+    assert.match(guide, /about one hour/);
+    assert.match(guide, /Do not disable Gatekeeper/);
+    assert.match(guide, /xattr/);
+    assert.match(guide, /spctl/);
+    assert.match(guide, /sudo/);
+    assert.match(guide, /com\.apple\.quarantine/);
+  }
   assert.match(testing, /simple first test/i);
+  assert.match(await readFile("site/testing.html", "utf8"), /No second model download should be required/);
   assert.match(testing, /Feedwish/);
   assert.match(testing, /without an account/);
   assert.match(testing, /private management code/);
   assert.doesNotMatch(`${install}\n${testing}`, /GitHub account/);
-  assert.match(install, /Do not disable Gatekeeper/);
-  assert.doesNotMatch(install, /quarantine-removal command/);
+  assert.doesNotMatch(`${install}\n${installPage}`, /disable Gatekeeper to continue/i);
+  assert.doesNotMatch(`${install}\n${installPage}`, /run (?:the )?(?:following )?command/i);
 });
 
 test("downloads page exposes accepted preview history and browser-local update tracking", async () => {
@@ -273,7 +301,7 @@ test("overview shows a privacy-safe local app preview", async () => {
   assert.doesNotMatch(image, /KeepVox/);
 });
 
-test("release catalog accepts only manifest-bounded exact GitHub assets", async () => {
+test("release catalog accepts exact historical assets and manifest-bounded R2 metadata", async () => {
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
   const release = (tag, overrides = {}) => ({
     tag_name: tag,
@@ -282,6 +310,7 @@ test("release catalog accepts only manifest-bounded exact GitHub assets", async 
     prerelease: true,
     published_at: "2026-08-15T07:55:59Z",
     html_url: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/tag/${tag}`,
+    body: "",
     assets: [
       {
         name: "RecordCove-macOS-preview.zip",
@@ -317,6 +346,26 @@ test("release catalog accepts only manifest-bounded exact GitHub assets", async 
     acceptedReleases([future, previous, invalid, current], manifest).map(({ tag }) => tag),
     [manifest.releaseTag, previousTag],
   );
+
+  const r2Tag = "v0.1.0-preview.9";
+  const r2DownloadUrl = `https://downloads.preview.recordcove.com/previews/${r2Tag}/RecordCove-macOS-preview.zip`;
+  const r2Manifest = {
+    ...manifest,
+    releaseTag: r2Tag,
+    downloadUrl: r2DownloadUrl,
+    bytes: 2600000000,
+    sha256: "a".repeat(64),
+  };
+  const r2Current = release(r2Tag, {
+    assets: [],
+    body: `Verified download: ${r2DownloadUrl}`,
+  });
+  assert.deepEqual(
+    acceptedReleases([r2Current, current, previous], r2Manifest).map(({ tag }) => tag),
+    [r2Tag, manifest.releaseTag, previousTag],
+  );
+  assert.equal(normalizeRelease({ ...r2Current, body: "" }, r2Manifest), null);
+  assert.equal(normalizeRelease({ ...r2Current, assets: current.assets }, r2Manifest), null);
 });
 
 test("download state distinguishes current and newer accepted previews", () => {

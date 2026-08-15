@@ -1,5 +1,6 @@
 const RELEASE_API = "https://api.github.com/repos/PrestonCoreSystems/recordcove-preview/releases";
 const RELEASE_REPOSITORY = "PrestonCoreSystems/recordcove-preview";
+const RELEASE_ORIGIN = "https://downloads.preview.recordcove.com";
 const RELEASE_FILE = "RecordCove-macOS-preview.zip";
 const RELEASE_PAGE_SIZE = 100;
 const MAX_RELEASE_PAGES = 20;
@@ -26,25 +27,52 @@ export function compareReleaseTags(left, right) {
   return 0;
 }
 
-export function normalizeRelease(release) {
+export function normalizeRelease(release, manifest = null) {
   const parts = releaseParts(release?.tag_name);
   if (!parts || release.draft !== false || release.prerelease !== true) {
     return null;
   }
   const expectedReleaseUrl = `https://github.com/${RELEASE_REPOSITORY}/releases/tag/${release.tag_name}`;
   const expectedDownloadUrl = `https://github.com/${RELEASE_REPOSITORY}/releases/download/${release.tag_name}/${RELEASE_FILE}`;
+  const expectedR2DownloadUrl = `${RELEASE_ORIGIN}/previews/${release.tag_name}/${RELEASE_FILE}`;
   const asset = release.assets?.find((candidate) => candidate.name === RELEASE_FILE);
   const digestMatch = DIGEST.exec(asset?.digest ?? "");
   const publishedAt = new Date(release.published_at ?? "");
   if (
     release.html_url !== expectedReleaseUrl ||
+    Number.isNaN(publishedAt.getTime())
+  ) {
+    return null;
+  }
+  if (
+    manifest?.releaseTag === release.tag_name &&
+    manifest.downloadUrl === expectedR2DownloadUrl
+  ) {
+    if (
+      !Array.isArray(release.assets) ||
+      release.assets.length !== 0 ||
+      !String(release.body ?? "").includes(`Verified download: ${expectedR2DownloadUrl}`)
+    ) {
+      return null;
+    }
+    return {
+      tag: release.tag_name,
+      version: `${parts[0]}.${parts[1]}.${parts[2]}`,
+      previewNumber: parts[3],
+      publishedAt: publishedAt.toISOString(),
+      releaseUrl: release.html_url,
+      downloadUrl: manifest.downloadUrl,
+      bytes: manifest.bytes,
+      sha256: manifest.sha256,
+    };
+  }
+  if (
     !asset ||
     asset.state !== "uploaded" ||
     asset.browser_download_url !== expectedDownloadUrl ||
     !Number.isSafeInteger(asset.size) ||
     asset.size <= 0 ||
-    !digestMatch ||
-    Number.isNaN(publishedAt.getTime())
+    !digestMatch
   ) {
     return null;
   }
@@ -62,7 +90,7 @@ export function normalizeRelease(release) {
 
 export function acceptedReleases(rawReleases, manifest) {
   const releases = rawReleases
-    .map(normalizeRelease)
+    .map((release) => normalizeRelease(release, manifest))
     .filter(Boolean)
     .filter((release) => compareReleaseTags(release.tag, manifest.releaseTag) <= 0)
     .sort((left, right) => compareReleaseTags(right.tag, left.tag));
@@ -165,6 +193,9 @@ function formatDate(value) {
 }
 
 function formatBytes(bytes) {
+  if (bytes >= 1_000_000_000) {
+    return `${(bytes / 1_000_000_000).toFixed(2)} GB`;
+  }
   return `${(bytes / 1_000_000).toFixed(1)} MB`;
 }
 

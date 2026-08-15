@@ -8,19 +8,20 @@ The preview currently focuses model discovery and qualification on developers an
 
 1. Open RecordCove.
 2. Complete the four onboarding screens.
-3. Confirm **Whisper Small English** is shown as included and verified.
-4. Select **New Recording**.
-5. Record about 20 seconds of ordinary, non-private speech.
-6. Select **Stop and Save**.
-7. Confirm the recording appears in **All Recordings** and does not say it was recovered after a normal save.
-8. Play the recording.
-9. Transcribe it with Whisper Small English.
-10. Confirm the transcript covers the full recording.
+3. Confirm **Whisper Small English** and **IBM Granite 4.1 3B** are both shown as included and verified. No second model download should be required.
+4. Confirm Whisper Small English is selected for transcription and IBM Granite is selected for Understanding.
+5. Select **New Recording**.
+6. Record about 20 seconds of ordinary, non-private speech.
+7. Select **Stop and Save**.
+8. Confirm the recording appears in **All Recordings** and does not say it was recovered after a normal save.
+9. Play the recording and transcribe it with Whisper Small English.
+10. Generate a title and summary, then try **Enhance**. Confirm the local results complete without switching to Apple on-device unless you explicitly selected Apple yourself.
+11. Confirm the transcript covers the full recording.
 
 ## Everyday feature checks
 
 - Copy the transcript and confirm the button changes back from **Copied** to **Copy** after a short moment.
-- Generate a Summary with an installed Understanding model.
+- Regenerate a Summary with IBM Granite selected.
 - Try **Enhance** and confirm the original transcript remains available in Version History.
 - Try **Clean up** and confirm the original transcript remains available.
 - Create a Quick Note, type a title, press Return, and confirm the cursor moves into the note body.
