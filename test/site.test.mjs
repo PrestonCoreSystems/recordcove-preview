@@ -221,16 +221,31 @@ test("release updater rejects malformed identity and changed safety controls", a
 
 test("non-technical guides explain the ZIP and safe first launch", async () => {
   const install = await readFile("INSTALL.md", "utf8");
+  const installPage = await readFile("site/install.html", "utf8");
   const testing = await readFile("TESTING.md", "utf8");
   assert.match(install, /Double-click `RecordCove-macOS-preview\.zip`/);
-  assert.match(install, /Hold the Control key/);
+  for (const guide of [install, installPage]) {
+    assert.match(guide, /Move to Bin/);
+    assert.match(guide, /Done/);
+    assert.match(guide, /System Settings/);
+    assert.match(guide, /Privacy &amp; Security|Privacy & Security/);
+    assert.match(guide, /Open Anyway/);
+    assert.match(guide, /password or Touch ID/);
+    assert.match(guide, /select <strong>Open<\/strong>|select \*\*Open\*\*/);
+    assert.match(guide, /about one hour/);
+    assert.match(guide, /Do not disable Gatekeeper/);
+    assert.match(guide, /xattr/);
+    assert.match(guide, /spctl/);
+    assert.match(guide, /sudo/);
+    assert.match(guide, /com\.apple\.quarantine/);
+  }
   assert.match(testing, /simple first test/i);
   assert.match(testing, /Feedwish/);
   assert.match(testing, /without an account/);
   assert.match(testing, /private management code/);
   assert.doesNotMatch(`${install}\n${testing}`, /GitHub account/);
-  assert.match(install, /Do not disable Gatekeeper/);
-  assert.doesNotMatch(install, /quarantine-removal command/);
+  assert.doesNotMatch(`${install}\n${installPage}`, /disable Gatekeeper to continue/i);
+  assert.doesNotMatch(`${install}\n${installPage}`, /run (?:the )?(?:following )?command/i);
 });
 
 test("downloads page exposes accepted preview history and browser-local update tracking", async () => {

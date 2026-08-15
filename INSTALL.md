@@ -24,11 +24,17 @@ The Downloads page shows the exact SHA-256 checksum for every preview. If you ar
 ## First launch
 
 1. Open **Applications** in Finder.
-2. Hold the Control key while clicking **RecordCove**, then select **Open**.
-3. macOS explains that Apple cannot verify the developer. Select **Open** only if the file and checksum match the preview page.
-4. RecordCove should open. If macOS says the app is damaged, stop and tell the maintainer.
+2. Double-click **RecordCove** once. macOS may explain that Apple cannot verify the app is free of malware.
+3. If the alert offers only **Move to Bin** and **Done**, select **Done**. Select **Move to Bin** instead if the source, filename, or checksum does not match the preview page.
+4. Open the Apple menu, select **System Settings**, then select **Privacy & Security**.
+5. Scroll down to **Security**. Confirm that the message names **RecordCove**, then select **Open Anyway**.
+6. Authenticate with your Mac login password or Touch ID if macOS asks.
+7. The warning appears again. After confirming the app name, source, filename, and checksum, select **Open**.
+8. RecordCove should open. macOS saves this as an exception for this specific copy of the app.
 
-Do not disable Gatekeeper and do not run a Terminal command to remove quarantine.
+The **Open Anyway** button is available for about one hour after a blocked launch. If it is missing, try to open RecordCove once more and immediately return to **Privacy & Security**. If it still does not appear, or macOS says the app is damaged, stop and tell the maintainer.
+
+Do not disable Gatekeeper, lower **Allow applications from**, or use Terminal workarounds such as `xattr`, `spctl`, `sudo`, or removal of `com.apple.quarantine`.
 
 ## Microphone permission
 
