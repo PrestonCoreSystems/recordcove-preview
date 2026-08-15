@@ -16,7 +16,7 @@ concurrency:
 jobs:
   verify:
     name: Verify public preview portal
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || github.ref != 'refs/heads/main') && 'ubuntu-latest' || 'preston-shared' }}
     timeout-minutes: 10
     steps:
       - name: Check out the reviewed revision
