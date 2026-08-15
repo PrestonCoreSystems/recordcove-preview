@@ -6,9 +6,11 @@ import { fileURLToPath } from "node:url";
 
 const RELEASE_FILE = "RecordCove-macOS-preview.zip";
 const RELEASE_REPOSITORY = "PrestonCoreSystems/recordcove-preview";
-const TAG_PATTERN = /^v(\d+\.\d+\.\d+)-preview\.(\d+)$/;
+const RELEASE_ORIGIN = "https://downloads.preview.recordcove.com";
+const TAG_PATTERN = /^v(\d+\.\d+\.\d+)-preview\.([1-9]\d*)$/;
 const SHA_PATTERN = /^[0-9a-f]{40}$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+const MAXIMUM_ARCHIVE_BYTES = 4 * 1024 * 1024 * 1024;
 
 function requireValue(value, label, pattern) {
   if (!pattern.test(value)) {
@@ -42,17 +44,21 @@ async function openRegularFileNoFollow(filePath, expectedParent) {
 
 export function validateReleaseManifest(manifest) {
   const tagMatch = TAG_PATTERN.exec(manifest.releaseTag ?? "");
-  const currentDownloadUrl = `https://github.com/${RELEASE_REPOSITORY}/releases/download/${manifest.releaseTag}/${RELEASE_FILE}`;
+  const acceptedDownloadUrls = new Set([
+    `https://github.com/${RELEASE_REPOSITORY}/releases/download/${manifest.releaseTag}/${RELEASE_FILE}`,
+    `${RELEASE_ORIGIN}/previews/${manifest.releaseTag}/${RELEASE_FILE}`,
+  ]);
   if (
     !tagMatch ||
     manifest.product !== "RecordCove" ||
     manifest.version !== tagMatch[1] ||
     manifest.file !== RELEASE_FILE ||
-    manifest.downloadUrl !== currentDownloadUrl ||
+    !acceptedDownloadUrls.has(manifest.downloadUrl) ||
     !SHA_PATTERN.test(manifest.sourceRevision ?? "") ||
     !DIGEST_PATTERN.test(manifest.sha256 ?? "") ||
     !Number.isSafeInteger(manifest.bytes) ||
     manifest.bytes <= 0 ||
+    manifest.bytes > MAXIMUM_ARCHIVE_BYTES ||
     manifest.signing !== "ad-hoc" ||
     manifest.notarized !== false ||
     manifest.publicReleaseApproved !== false ||
@@ -77,7 +83,7 @@ export async function updateRelease({
   requireValue(archiveSha256, "archive SHA-256", DIGEST_PATTERN);
 
   const bytes = Number(archiveBytes);
-  if (!Number.isSafeInteger(bytes) || bytes <= 0) {
+  if (!Number.isSafeInteger(bytes) || bytes <= 0 || bytes > MAXIMUM_ARCHIVE_BYTES) {
     throw new Error("archive byte size is invalid");
   }
 
@@ -108,7 +114,7 @@ export async function updateRelease({
   ) {
     throw new Error("release tag must be the next preview for the current version");
   }
-  const downloadUrl = `https://github.com/${RELEASE_REPOSITORY}/releases/download/${releaseTag}/${RELEASE_FILE}`;
+  const downloadUrl = `${RELEASE_ORIGIN}/previews/${releaseTag}/${RELEASE_FILE}`;
   manifest.version = nextTagMatch[1];
   manifest.releaseTag = releaseTag;
   manifest.bytes = bytes;

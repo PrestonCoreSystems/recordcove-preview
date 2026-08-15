@@ -80,6 +80,10 @@ test("release updater changes only the next exact preview identity", async () =>
   assert.equal(manifest.sourceRevision, requested.sourceRevision);
   assert.equal(manifest.sha256, requested.archiveSha256);
   assert.equal(manifest.bytes, Number(requested.archiveBytes));
+  assert.equal(
+    manifest.downloadUrl,
+    `https://downloads.preview.recordcove.com/previews/${requested.releaseTag}/RecordCove-macOS-preview.zip`,
+  );
   assert.match(page, new RegExp(requested.releaseTag));
   assert.match(page, new RegExp(requested.sourceRevision));
   assert.match(page, new RegExp(requested.archiveSha256));
@@ -297,7 +301,7 @@ test("overview shows a privacy-safe local app preview", async () => {
   assert.doesNotMatch(image, /KeepVox/);
 });
 
-test("release catalog accepts only manifest-bounded exact GitHub assets", async () => {
+test("release catalog accepts exact historical assets and manifest-bounded R2 metadata", async () => {
   const manifest = JSON.parse(await readFile("site/release-manifest.json", "utf8"));
   const release = (tag, overrides = {}) => ({
     tag_name: tag,
@@ -306,6 +310,7 @@ test("release catalog accepts only manifest-bounded exact GitHub assets", async 
     prerelease: true,
     published_at: "2026-08-15T07:55:59Z",
     html_url: `https://github.com/PrestonCoreSystems/recordcove-preview/releases/tag/${tag}`,
+    body: "",
     assets: [
       {
         name: "RecordCove-macOS-preview.zip",
@@ -341,6 +346,26 @@ test("release catalog accepts only manifest-bounded exact GitHub assets", async 
     acceptedReleases([future, previous, invalid, current], manifest).map(({ tag }) => tag),
     [manifest.releaseTag, previousTag],
   );
+
+  const r2Tag = "v0.1.0-preview.9";
+  const r2DownloadUrl = `https://downloads.preview.recordcove.com/previews/${r2Tag}/RecordCove-macOS-preview.zip`;
+  const r2Manifest = {
+    ...manifest,
+    releaseTag: r2Tag,
+    downloadUrl: r2DownloadUrl,
+    bytes: 2528517650,
+    sha256: "a".repeat(64),
+  };
+  const r2Current = release(r2Tag, {
+    assets: [],
+    body: `Verified download: ${r2DownloadUrl}`,
+  });
+  assert.deepEqual(
+    acceptedReleases([r2Current, current, previous], r2Manifest).map(({ tag }) => tag),
+    [r2Tag, manifest.releaseTag, previousTag],
+  );
+  assert.equal(normalizeRelease({ ...r2Current, body: "" }, r2Manifest), null);
+  assert.equal(normalizeRelease({ ...r2Current, assets: current.assets }, r2Manifest), null);
 });
 
 test("download state distinguishes current and newer accepted previews", () => {
