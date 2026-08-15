@@ -10,8 +10,8 @@ This early preview is ad-hoc signed and is not Apple-notarized. Install it only 
 
 ## Download and unzip
 
-1. Open `https://preview.recordcove.com` in Safari, Chrome, or another browser.
-2. Select **Download RecordCove for Mac**.
+1. Open `https://preview.recordcove.com/downloads.html` in Safari, Chrome, or another browser.
+2. Choose the newest accepted preview. The page shows its publication date and remembers the version selected in that browser so it can highlight a later update.
 3. Wait for the download to finish. It is large because Whisper Small English is included.
 4. Open Finder and select **Downloads** in the left sidebar.
 5. Double-click `RecordCove-macOS-preview.zip`. Your Mac creates a folder containing `RecordCove.app`.
@@ -19,7 +19,7 @@ This early preview is ad-hoc signed and is not Apple-notarized. Install it only 
 
 ## Optional checksum check
 
-The preview page shows the exact SHA-256 checksum. If you are comfortable with Terminal, open Terminal, type `shasum -a 256`, press the Space bar once, drag the ZIP into the window, and press Return. The result must match the preview page exactly.
+The Downloads page shows the exact SHA-256 checksum for every preview. If you are comfortable with Terminal, open Terminal, type `shasum -a 256`, press the Space bar once, drag the ZIP into the window, and press Return. The result must match the selected preview exactly.
 
 ## First launch
 
@@ -38,7 +38,7 @@ RecordCove asks for microphone permission only when it needs to record. Select *
 
 1. Finish or cancel any active recording.
 2. Quit RecordCove.
-3. Download and verify the newer preview.
+3. Return to Preview downloads. If the page says a newer accepted preview is available, download and verify it.
 4. Replace the application in Applications.
 
 Your recording library is stored separately from the application, so replacing the app does not remove it.
