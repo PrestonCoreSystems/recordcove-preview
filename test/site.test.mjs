@@ -43,6 +43,10 @@ test("preview page carries the exact public preview package and safety boundary"
   assert.match(page, /North America, Europe, and Africa/);
   assert.match(page, /mainland China are outside the current evaluation and packaging scope/);
   assert.match(page, /not a claim that included models are universally better/);
+  assert.match(page, /Whisper Small English/);
+  assert.match(page, /IBM Granite 4\.1 3B/);
+  assert.match(page, /about 2\.53 GB as a ZIP/);
+  assert.match(page, /download will remain unavailable/);
   assert.doesNotMatch(page, /KeepVox/);
   assert.match(page, new RegExp(manifest.sha256));
   assert.match(manifest.sourceRevision, /^[0-9a-f]{40}$/);
@@ -225,6 +229,10 @@ test("non-technical guides explain the ZIP and safe first launch", async () => {
   const testing = await readFile("TESTING.md", "utf8");
   assert.match(install, /Double-click `RecordCove-macOS-preview\.zip`/);
   for (const guide of [install, installPage]) {
+    assert.match(guide, /at least 6 GB/);
+    assert.match(guide, /Whisper Small English/);
+    assert.match(guide, /IBM Granite 4\.1 3B/);
+    assert.match(guide, /2\.53 GB/);
     assert.match(guide, /Move to Bin/);
     assert.match(guide, /Done/);
     assert.match(guide, /System Settings/);
@@ -240,6 +248,7 @@ test("non-technical guides explain the ZIP and safe first launch", async () => {
     assert.match(guide, /com\.apple\.quarantine/);
   }
   assert.match(testing, /simple first test/i);
+  assert.match(await readFile("site/testing.html", "utf8"), /No second model download should be required/);
   assert.match(testing, /Feedwish/);
   assert.match(testing, /without an account/);
   assert.match(testing, /private management code/);

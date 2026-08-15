@@ -4,7 +4,9 @@ These steps are written for someone who does not normally install preview softwa
 
 ## Before you start
 
-You need an Apple silicon Mac, macOS 14 or later, about 1 GB of free disk space, and an internet connection. RecordCove works locally and does not require a RecordCove account.
+You need an Apple silicon Mac, macOS 14 or later, at least 6 GB of free disk space during installation, and an internet connection for the initial download. RecordCove works locally after installation and does not require a RecordCove account.
+
+The preview is a large download because it includes two verified local models: **Whisper Small English** for transcription and **IBM Granite 4.1 3B** for titles, summaries, and transcript enhancement. Both are installed with RecordCove. Granite is selected by default so a new tester can evaluate the intended local Understanding experience without a second model download. Apple on-device and Ministral remain optional choices in Models.
 
 This early preview is ad-hoc signed and is not Apple-notarized. Install it only if you trust Preston Core Systems Limited, downloaded it from `https://preview.recordcove.com`, and the filename and checksum match the preview page.
 
@@ -12,7 +14,7 @@ This early preview is ad-hoc signed and is not Apple-notarized. Install it only 
 
 1. Open `https://preview.recordcove.com/downloads.html` in Safari, Chrome, or another browser.
 2. Choose the newest accepted preview. The page shows its publication date and remembers the version selected in that browser so it can highlight a later update.
-3. Wait for the download to finish. It is large because Whisper Small English is included.
+3. Wait for the download to finish. The current bundled-model candidate is about 2.53 GB as a ZIP and about 2.5 GB after extraction. Keeping at least 6 GB free allows the ZIP and extracted application to exist together during installation.
 4. Open Finder and select **Downloads** in the left sidebar.
 5. Double-click `RecordCove-macOS-preview.zip`. Your Mac creates a folder containing `RecordCove.app`.
 6. Drag **RecordCove** into the **Applications** folder in Finder.

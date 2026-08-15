@@ -8,6 +8,8 @@ The Downloads page reads the public GitHub prerelease inventory and displays onl
 
 The preview is not Apple-notarized and is not the public product launch. The portal must retain that warning and the current Gatekeeper recovery path: attempt one launch, choose **Done** if macOS offers only **Move to Bin** and **Done**, then use **System Settings**, **Privacy & Security**, **Open Anyway**, authentication, and the final **Open** confirmation. It must never tell testers to disable Gatekeeper, lower app-security settings, or use Terminal commands to remove quarantine.
 
+The next bundled-model preview includes verified Whisper Small English and IBM Granite 4.1 3B inside the application. Whisper is the default transcription model and Granite is the default Understanding model for titles, summaries, and enhancement. Testers must not need a second Granite download or be silently moved to Apple on-device. The measured owner-preview candidate is 2,528,517,655 bytes as a ZIP, so it cannot be uploaded as one GitHub Release asset. Publication remains blocked until a reviewed distribution channel can serve that exact large artifact without changing the package or safety contract.
+
 ## Current model scope
 
 For this preview, RecordCove focuses model discovery, qualification, and packaging on model developers and originating model families from North America, Europe, and Africa. Models originating from mainland China are outside the current evaluation and packaging scope.
@@ -25,6 +27,7 @@ This is a current release-scope and supply-chain qualification decision. It is n
 7. Keep Developer ID signing, notarization, Homebrew, trusted CI, and public product launch outside this preview lane.
 8. Use only privacy-safe product imagery with synthetic content. Public screenshots must never show a real recording, transcript, summary, prompt, model output, filename, path, category, tag, or other user data.
 9. Version static CSS and image URLs when their bytes change so cached preview pages cannot combine new markup with stale presentation rules.
+10. Explain that both default local models are included, why the archive is large, and that at least 6 GB of temporary free space is recommended for download plus extraction.
 
 Tester instructions are in [INSTALL.md](INSTALL.md) and [TESTING.md](TESTING.md). The distribution boundary is in [PRIVATE_PREVIEW_NOTICE.md](PRIVATE_PREVIEW_NOTICE.md).
 
