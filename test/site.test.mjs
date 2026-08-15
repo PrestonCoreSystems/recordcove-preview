@@ -12,6 +12,7 @@ import {
   acceptedReleases,
   compareReleaseTags,
   downloadState,
+  fetchReleasePages,
   normalizeRelease,
 } from "../site/downloads.mjs";
 
@@ -303,6 +304,32 @@ test("download state distinguishes current and newer accepted previews", () => {
     downloadState("v0.1.0-preview.8", { releaseTag: "v0.1.0-preview.7" }).kind,
     "update",
   );
+});
+
+test("release history paginates until a later-page manifest release is retained", async () => {
+  const manifestTag = "v0.1.0-preview.8";
+  const firstPage = Array.from({ length: 100 }, (_, index) => ({
+    tag_name: `v0.1.0-preview.${108 - index}`,
+  }));
+  const secondPage = [
+    { tag_name: manifestTag },
+    { tag_name: "v0.1.0-preview.7" },
+    { tag_name: "v0.1.0-preview.6" },
+  ];
+  const requestedUrls = [];
+  const releases = await fetchReleasePages(async (url) => {
+    requestedUrls.push(url);
+    return {
+      ok: true,
+      json: async () => (url.endsWith("page=1") ? firstPage : secondPage),
+    };
+  }, manifestTag);
+  assert.equal(requestedUrls.length, 2);
+  assert.match(requestedUrls[0], /per_page=100&page=1$/);
+  assert.match(requestedUrls[1], /per_page=100&page=2$/);
+  assert.equal(releases.length, 103);
+  assert.equal(releases[100].tag_name, manifestTag);
+  assert.equal(releases[102].tag_name, "v0.1.0-preview.6");
 });
 
 test("public preview CI and deploy stay on GitHub-hosted least-privilege boundaries", async () => {

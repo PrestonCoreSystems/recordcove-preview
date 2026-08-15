@@ -1,6 +1,8 @@
-const RELEASE_API = "https://api.github.com/repos/PrestonCoreSystems/recordcove-preview/releases?per_page=100";
+const RELEASE_API = "https://api.github.com/repos/PrestonCoreSystems/recordcove-preview/releases";
 const RELEASE_REPOSITORY = "PrestonCoreSystems/recordcove-preview";
 const RELEASE_FILE = "RecordCove-macOS-preview.zip";
+const RELEASE_PAGE_SIZE = 100;
+const MAX_RELEASE_PAGES = 20;
 const RELEASE_TAG = /^v(\d+)\.(\d+)\.(\d+)-preview\.(\d+)$/;
 const DIGEST = /^sha256:([0-9a-f]{64})$/;
 const STORAGE_KEY = "recordcove.preview.lastSelectedDownload.v1";
@@ -74,6 +76,34 @@ export function acceptedReleases(rawReleases, manifest) {
     throw new Error("latest release does not match the accepted preview manifest");
   }
   return releases;
+}
+
+export async function fetchReleasePages(fetcher, manifestTag) {
+  if (!releaseParts(manifestTag)) {
+    throw new Error("accepted preview release tag is invalid");
+  }
+  const releases = [];
+  let manifestFound = false;
+  for (let page = 1; page <= MAX_RELEASE_PAGES; page += 1) {
+    const url = `${RELEASE_API}?per_page=${RELEASE_PAGE_SIZE}&page=${page}`;
+    const response = await fetcher(url, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("preview history is temporarily unavailable");
+    }
+    const pageReleases = await response.json();
+    if (!Array.isArray(pageReleases)) {
+      throw new Error("preview history response is invalid");
+    }
+    releases.push(...pageReleases);
+    manifestFound ||= pageReleases.some((release) => release.tag_name === manifestTag);
+    if (pageReleases.length < RELEASE_PAGE_SIZE) {
+      if (!manifestFound) {
+        throw new Error("accepted preview release is unavailable");
+      }
+      return releases;
+    }
+  }
+  throw new Error("preview history exceeds the safe pagination limit");
 }
 
 export function downloadState(latestTag, remembered) {
@@ -226,15 +256,15 @@ function render(releases, remembered) {
 }
 
 async function loadDownloads() {
-  const [manifestResponse, releasesResponse] = await Promise.all([
-    fetch("/release-manifest.json", { cache: "no-store" }),
-    fetch(RELEASE_API, { cache: "no-store" }),
-  ]);
-  if (!manifestResponse.ok || !releasesResponse.ok) {
+  const manifestResponse = await fetch("/release-manifest.json", { cache: "no-store" });
+  if (!manifestResponse.ok) {
     throw new Error("preview history is temporarily unavailable");
   }
   const manifest = await manifestResponse.json();
-  const releases = acceptedReleases(await releasesResponse.json(), manifest);
+  const releases = acceptedReleases(
+    await fetchReleasePages(fetch, manifest.releaseTag),
+    manifest,
+  );
   render(releases, readRememberedDownload());
 }
 
