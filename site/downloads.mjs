@@ -4,8 +4,11 @@ const RELEASE_ORIGIN = "https://downloads.preview.recordcove.com";
 const RELEASE_FILE = "RecordCove-macOS-preview.zip";
 const RELEASE_PAGE_SIZE = 100;
 const MAX_RELEASE_PAGES = 20;
+const MAX_HISTORICAL_MANIFEST_REQUESTS = 4;
 const RELEASE_TAG = /^v(\d+)\.(\d+)\.(\d+)-preview\.(\d+)$/;
 const DIGEST = /^sha256:([0-9a-f]{64})$/;
+const SHA256 = /^[0-9a-f]{64}$/;
+const REVISION = /^[0-9a-f]{40}$/;
 const STORAGE_KEY = "recordcove.preview.lastSelectedDownload.v1";
 
 function releaseParts(tag) {
@@ -27,6 +30,28 @@ export function compareReleaseTags(left, right) {
   return 0;
 }
 
+function isExactR2Manifest(manifest, releaseTag, expectedDownloadUrl) {
+  const parts = releaseParts(releaseTag);
+  return Boolean(
+    parts &&
+      manifest?.product === "RecordCove" &&
+      manifest.version === `${parts[0]}.${parts[1]}.${parts[2]}` &&
+      REVISION.test(manifest.sourceRevision ?? "") &&
+      manifest.file === RELEASE_FILE &&
+      manifest.releaseTag === releaseTag &&
+      manifest.downloadUrl === expectedDownloadUrl &&
+      Number.isSafeInteger(manifest.bytes) &&
+      manifest.bytes > 0 &&
+      SHA256.test(manifest.sha256 ?? "") &&
+      manifest.platform === "macOS 14 or later on Apple silicon" &&
+      manifest.signing === "ad-hoc" &&
+      manifest.notarized === false &&
+      manifest.audience === "public-preview-testers" &&
+      manifest.friendDownloadEnabled === true &&
+      manifest.publicReleaseApproved === false,
+  );
+}
+
 export function normalizeRelease(release, manifest = null) {
   const parts = releaseParts(release?.tag_name);
   if (!parts || release.draft !== false || release.prerelease !== true) {
@@ -44,10 +69,7 @@ export function normalizeRelease(release, manifest = null) {
   ) {
     return null;
   }
-  if (
-    manifest?.releaseTag === release.tag_name &&
-    manifest.downloadUrl === expectedR2DownloadUrl
-  ) {
+  if (isExactR2Manifest(manifest, release.tag_name, expectedR2DownloadUrl)) {
     if (
       !Array.isArray(release.assets) ||
       release.assets.length !== 0 ||
@@ -88,9 +110,16 @@ export function normalizeRelease(release, manifest = null) {
   };
 }
 
-export function acceptedReleases(rawReleases, manifest) {
+export function acceptedReleases(rawReleases, manifest, historicalR2Manifests = new Map()) {
   const releases = rawReleases
-    .map((release) => normalizeRelease(release, manifest))
+    .map((release) =>
+      normalizeRelease(
+        release,
+        release.tag_name === manifest.releaseTag
+          ? manifest
+          : historicalR2Manifests.get(release.tag_name),
+      ),
+    )
     .filter(Boolean)
     .filter((release) => compareReleaseTags(release.tag, manifest.releaseTag) <= 0)
     .sort((left, right) => compareReleaseTags(right.tag, left.tag));
@@ -104,6 +133,53 @@ export function acceptedReleases(rawReleases, manifest) {
     throw new Error("latest release does not match the accepted preview manifest");
   }
   return releases;
+}
+
+export async function fetchHistoricalR2Manifests(fetcher, rawReleases, currentManifest) {
+  const manifests = new Map();
+  const candidates = rawReleases.filter((release) => {
+    const tag = release?.tag_name;
+    const expectedDownloadUrl = `${RELEASE_ORIGIN}/previews/${tag}/${RELEASE_FILE}`;
+    return (
+      tag !== currentManifest.releaseTag &&
+      releaseParts(tag) &&
+      compareReleaseTags(tag, currentManifest.releaseTag) < 0 &&
+      Array.isArray(release.assets) &&
+      release.assets.length === 0 &&
+      REVISION.test(release.target_commitish ?? "") &&
+      String(release.body ?? "").includes(`Verified download: ${expectedDownloadUrl}`)
+    );
+  });
+
+  let nextCandidate = 0;
+  const workers = Array.from(
+    { length: Math.min(MAX_HISTORICAL_MANIFEST_REQUESTS, candidates.length) },
+    async () => {
+      while (nextCandidate < candidates.length) {
+        const release = candidates[nextCandidate];
+        nextCandidate += 1;
+        const manifestUrl =
+          `https://raw.githubusercontent.com/${RELEASE_REPOSITORY}/` +
+          `${release.target_commitish}/site/release-manifest.json`;
+        try {
+          const response = await fetcher(manifestUrl, { cache: "no-store" });
+          if (!response.ok) {
+            continue;
+          }
+          const manifest = await response.json();
+          const expectedDownloadUrl =
+            `${RELEASE_ORIGIN}/previews/${release.tag_name}/${RELEASE_FILE}`;
+          if (isExactR2Manifest(manifest, release.tag_name, expectedDownloadUrl)) {
+            manifests.set(release.tag_name, manifest);
+          }
+        } catch {
+          // One unavailable historical manifest must not hide the current accepted preview.
+        }
+      }
+    },
+  );
+  await Promise.all(workers);
+  return manifests;
 }
 
 export async function fetchReleasePages(fetcher, manifestTag) {
@@ -292,9 +368,16 @@ async function loadDownloads() {
     throw new Error("preview history is temporarily unavailable");
   }
   const manifest = await manifestResponse.json();
-  const releases = acceptedReleases(
-    await fetchReleasePages(fetch, manifest.releaseTag),
+  const rawReleases = await fetchReleasePages(fetch, manifest.releaseTag);
+  const historicalR2Manifests = await fetchHistoricalR2Manifests(
+    fetch,
+    rawReleases,
     manifest,
+  );
+  const releases = acceptedReleases(
+    rawReleases,
+    manifest,
+    historicalR2Manifests,
   );
   render(releases, readRememberedDownload());
 }
