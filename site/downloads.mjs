@@ -4,6 +4,7 @@ const RELEASE_ORIGIN = "https://downloads.preview.recordcove.com";
 const RELEASE_FILE = "RecordCove-macOS-preview.zip";
 const RELEASE_PAGE_SIZE = 100;
 const MAX_RELEASE_PAGES = 20;
+const MAX_HISTORICAL_MANIFEST_REQUESTS = 4;
 const RELEASE_TAG = /^v(\d+)\.(\d+)\.(\d+)-preview\.(\d+)$/;
 const DIGEST = /^sha256:([0-9a-f]{64})$/;
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -150,27 +151,34 @@ export async function fetchHistoricalR2Manifests(fetcher, rawReleases, currentMa
     );
   });
 
-  await Promise.all(
-    candidates.map(async (release) => {
-      const manifestUrl =
-        `https://raw.githubusercontent.com/${RELEASE_REPOSITORY}/` +
-        `${release.target_commitish}/site/release-manifest.json`;
-      try {
-        const response = await fetcher(manifestUrl, { cache: "no-store" });
-        if (!response.ok) {
-          return;
+  let nextCandidate = 0;
+  const workers = Array.from(
+    { length: Math.min(MAX_HISTORICAL_MANIFEST_REQUESTS, candidates.length) },
+    async () => {
+      while (nextCandidate < candidates.length) {
+        const release = candidates[nextCandidate];
+        nextCandidate += 1;
+        const manifestUrl =
+          `https://raw.githubusercontent.com/${RELEASE_REPOSITORY}/` +
+          `${release.target_commitish}/site/release-manifest.json`;
+        try {
+          const response = await fetcher(manifestUrl, { cache: "no-store" });
+          if (!response.ok) {
+            continue;
+          }
+          const manifest = await response.json();
+          const expectedDownloadUrl =
+            `${RELEASE_ORIGIN}/previews/${release.tag_name}/${RELEASE_FILE}`;
+          if (isExactR2Manifest(manifest, release.tag_name, expectedDownloadUrl)) {
+            manifests.set(release.tag_name, manifest);
+          }
+        } catch {
+          // One unavailable historical manifest must not hide the current accepted preview.
         }
-        const manifest = await response.json();
-        const expectedDownloadUrl =
-          `${RELEASE_ORIGIN}/previews/${release.tag_name}/${RELEASE_FILE}`;
-        if (isExactR2Manifest(manifest, release.tag_name, expectedDownloadUrl)) {
-          manifests.set(release.tag_name, manifest);
-        }
-      } catch {
-        // One unavailable historical manifest must not hide the current accepted preview.
       }
-    }),
+    },
   );
+  await Promise.all(workers);
   return manifests;
 }
 

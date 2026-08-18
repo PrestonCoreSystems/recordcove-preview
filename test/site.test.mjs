@@ -516,6 +516,56 @@ test("historical R2 manifests are fetched from their immutable release revisions
   assert.equal(rejected.size, 0);
 });
 
+test("historical R2 manifest requests use bounded concurrency", async () => {
+  const currentManifest = { releaseTag: "v0.1.0-preview.10" };
+  const releases = Array.from({ length: 6 }, (_, index) => {
+    const previewNumber = 9 - index;
+    const tag = `v0.1.0-preview.${previewNumber}`;
+    const revision = String(previewNumber).repeat(40).slice(0, 40);
+    return {
+      tag_name: tag,
+      assets: [],
+      body:
+        `Verified download: https://downloads.preview.recordcove.com/previews/${tag}/` +
+        "RecordCove-macOS-preview.zip",
+      target_commitish: revision,
+    };
+  });
+  let activeRequests = 0;
+  let maximumActiveRequests = 0;
+  const manifests = await fetchHistoricalR2Manifests(async (url) => {
+    activeRequests += 1;
+    maximumActiveRequests = Math.max(maximumActiveRequests, activeRequests);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    activeRequests -= 1;
+    const release = releases.find(({ target_commitish }) => url.includes(target_commitish));
+    const downloadUrl =
+      `https://downloads.preview.recordcove.com/previews/${release.tag_name}/` +
+      "RecordCove-macOS-preview.zip";
+    return {
+      ok: true,
+      json: async () => ({
+        product: "RecordCove",
+        version: "0.1.0",
+        sourceRevision: "a".repeat(40),
+        file: "RecordCove-macOS-preview.zip",
+        downloadUrl,
+        releaseTag: release.tag_name,
+        bytes: 2528555456,
+        sha256: "b".repeat(64),
+        platform: "macOS 14 or later on Apple silicon",
+        signing: "ad-hoc",
+        notarized: false,
+        audience: "public-preview-testers",
+        friendDownloadEnabled: true,
+        publicReleaseApproved: false,
+      }),
+    };
+  }, releases, currentManifest);
+  assert.equal(manifests.size, releases.length);
+  assert.equal(maximumActiveRequests, 4);
+});
+
 test("download state distinguishes current and newer accepted previews", () => {
   assert.equal(downloadState("v0.1.0-preview.8", null).kind, "none");
   assert.equal(
