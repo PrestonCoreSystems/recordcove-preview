@@ -12,6 +12,7 @@ import {
   acceptedReleases,
   compareReleaseTags,
   downloadState,
+  fetchHistoricalR2Manifests,
   fetchReleasePages,
   normalizeRelease,
 } from "../site/downloads.mjs";
@@ -270,7 +271,7 @@ test("downloads page exposes accepted preview history and browser-local update t
   assert.match(page, /Latest accepted preview/);
   assert.match(page, /Previous previews/);
   assert.match(page, /stored only in this browser/);
-  assert.match(page, /downloads\.mjs/);
+  assert.match(page, /downloads\.mjs\?v=2/);
   for (const document of [index, install, testing]) {
     assert.match(document, /href="\/downloads\.html"/);
   }
@@ -380,14 +381,25 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
   const r2DownloadUrl = `https://downloads.preview.recordcove.com/previews/${r2Tag}/RecordCove-macOS-preview.zip`;
   const r2Manifest = {
     ...legacyManifest,
+    product: "RecordCove",
+    version: "0.1.0",
+    sourceRevision: "e".repeat(40),
+    file: "RecordCove-macOS-preview.zip",
     releaseTag: r2Tag,
     downloadUrl: r2DownloadUrl,
     bytes: 2600000000,
     sha256: "a".repeat(64),
+    platform: "macOS 14 or later on Apple silicon",
+    signing: "ad-hoc",
+    notarized: false,
+    audience: "public-preview-testers",
+    friendDownloadEnabled: true,
+    publicReleaseApproved: false,
   };
   const r2Current = release(r2Tag, {
     assets: [],
     body: `Verified download: ${r2DownloadUrl}`,
+    target_commitish: "b".repeat(40),
   });
   assert.deepEqual(
     acceptedReleases([r2Current, legacyCurrent, previous], r2Manifest).map(({ tag }) => tag),
@@ -395,6 +407,113 @@ test("release catalog accepts exact historical assets and manifest-bounded R2 me
   );
   assert.equal(normalizeRelease({ ...r2Current, body: "" }, r2Manifest), null);
   assert.equal(normalizeRelease({ ...r2Current, assets: legacyCurrent.assets }, r2Manifest), null);
+
+  const newerR2Tag = "v0.1.0-preview.10";
+  const newerR2DownloadUrl =
+    `https://downloads.preview.recordcove.com/previews/${newerR2Tag}/RecordCove-macOS-preview.zip`;
+  const newerR2Manifest = {
+    ...r2Manifest,
+    releaseTag: newerR2Tag,
+    downloadUrl: newerR2DownloadUrl,
+    sourceRevision: "c".repeat(40),
+    bytes: 2600000001,
+    sha256: "d".repeat(64),
+    product: "RecordCove",
+    version: "0.1.0",
+    file: "RecordCove-macOS-preview.zip",
+    platform: "macOS 14 or later on Apple silicon",
+    signing: "ad-hoc",
+    notarized: false,
+    audience: "public-preview-testers",
+    friendDownloadEnabled: true,
+    publicReleaseApproved: false,
+  };
+  const newerR2Current = release(newerR2Tag, {
+    assets: [],
+    body: `Verified download: ${newerR2DownloadUrl}`,
+  });
+  const historicalManifests = new Map([[r2Tag, {
+    ...r2Manifest,
+    sourceRevision: "e".repeat(40),
+    product: "RecordCove",
+    version: "0.1.0",
+    file: "RecordCove-macOS-preview.zip",
+    platform: "macOS 14 or later on Apple silicon",
+    signing: "ad-hoc",
+    notarized: false,
+    audience: "public-preview-testers",
+    friendDownloadEnabled: true,
+    publicReleaseApproved: false,
+  }]]);
+  assert.deepEqual(
+    acceptedReleases(
+      [newerR2Current, r2Current, legacyCurrent],
+      newerR2Manifest,
+      historicalManifests,
+    ).map(({ tag }) => tag),
+    [newerR2Tag, r2Tag, legacyTag],
+  );
+});
+
+test("historical R2 manifests are fetched from their immutable release revisions", async () => {
+  const currentTag = "v0.1.0-preview.10";
+  const historicalTag = "v0.1.0-preview.9";
+  const historicalRevision = "d15ab2ad461b72badb84854ca6677eab70c9ebc2";
+  const historicalDownloadUrl =
+    `https://downloads.preview.recordcove.com/previews/${historicalTag}/RecordCove-macOS-preview.zip`;
+  const currentManifest = {
+    releaseTag: currentTag,
+  };
+  const historicalManifest = {
+    product: "RecordCove",
+    version: "0.1.0",
+    sourceRevision: "f0ec4f1ba035c57860760e2b618a3e40d1ded2a3",
+    file: "RecordCove-macOS-preview.zip",
+    downloadUrl: historicalDownloadUrl,
+    releaseTag: historicalTag,
+    bytes: 2528555456,
+    sha256: "a7fbf65eb70212eb2e53dcc7d3add89e0cbcd86478dc9604b02907d42a649d4f",
+    platform: "macOS 14 or later on Apple silicon",
+    signing: "ad-hoc",
+    notarized: false,
+    audience: "public-preview-testers",
+    friendDownloadEnabled: true,
+    publicReleaseApproved: false,
+  };
+  const releases = [
+    {
+      tag_name: historicalTag,
+      assets: [],
+      body: `Verified download: ${historicalDownloadUrl}`,
+      target_commitish: historicalRevision,
+    },
+    {
+      tag_name: "v0.1.0-preview.8",
+      assets: [{ name: "RecordCove-macOS-preview.zip" }],
+      target_commitish: "f".repeat(40),
+    },
+    {
+      tag_name: "v0.1.0-preview.7",
+      assets: [],
+      body: "Verified download: https://example.com/untrusted.zip",
+      target_commitish: "a".repeat(40),
+    },
+  ];
+  const requestedUrls = [];
+  const manifests = await fetchHistoricalR2Manifests(async (url) => {
+    requestedUrls.push(url);
+    return { ok: true, json: async () => historicalManifest };
+  }, releases, currentManifest);
+  assert.deepEqual(requestedUrls, [
+    `https://raw.githubusercontent.com/PrestonCoreSystems/recordcove-preview/${historicalRevision}/site/release-manifest.json`,
+  ]);
+  assert.deepEqual(manifests.get(historicalTag), historicalManifest);
+
+  const rejected = await fetchHistoricalR2Manifests(async () => ({
+    ok: true,
+    json: async () => ({ ...historicalManifest, publicReleaseApproved: true }),
+  }), releases, currentManifest);
+  assert.equal(rejected.size, 0);
 });
 
 test("download state distinguishes current and newer accepted previews", () => {
