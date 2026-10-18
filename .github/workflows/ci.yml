@@ -16,7 +16,7 @@ concurrency:
 jobs:
   verify:
     name: Verify public preview portal
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Check out the reviewed revision
@@ -46,7 +46,7 @@ jobs:
     name: Deploy protected Preview main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     environment: recordcove-preview-production
     concurrency:
