@@ -617,7 +617,7 @@ test("public preview CI and deploy stay on GitHub-hosted least-privilege boundar
   });
   assert.deepEqual(Object.keys(parsed.jobs), ["verify", "deploy"]);
   const verify = parsed.jobs.verify;
-  assert.equal(verify["runs-on"], "ubuntu-latest");
+  assert.equal(verify["runs-on"], "ubuntu-26.04");
   assert.equal(verify["timeout-minutes"], 10);
   assert.deepEqual(
     verify.steps.map((step) => step.name),
@@ -643,7 +643,7 @@ test("public preview CI and deploy stay on GitHub-hosted least-privilege boundar
     "github.event_name == 'push' && github.ref == 'refs/heads/main'",
   );
   assert.equal(deploy.needs, "verify");
-  assert.equal(deploy["runs-on"], "ubuntu-latest");
+  assert.equal(deploy["runs-on"], "ubuntu-26.04");
   assert.equal(deploy["timeout-minutes"], 10);
   assert.equal(deploy.environment, "recordcove-preview-production");
   assert.deepEqual(deploy.concurrency, {

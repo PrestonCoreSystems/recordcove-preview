@@ -1,0 +1,5 @@
+# The pinned linter predates GitHub's hosted Ubuntu 26.04 image.
+# Remove this exact label extension when the linter supports the image.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
