@@ -1,0 +1,20 @@
+name: Public source security
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-public-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    if: github.event.action != 'edited' || github.event.changes.base.ref != null
+    uses: PrestonCoreSystems/.github/.github/workflows/reusable-public-security.yml@f83277823665d59b2a31cab6824bedf4f162cfdd
